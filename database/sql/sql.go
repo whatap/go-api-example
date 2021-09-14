@@ -49,7 +49,8 @@ func main() {
 	defer trace.Shutdown()
 	ctx := context.Background()
 	wCtx, _ := trace.Start(ctx, "example-sql")
-	if result, err := getMysql(wCtx); err != nil {
+	result, err := getMysql(wCtx)
+	if err != nil {
 		fmt.Println("Error GetMysql() len=", len(result), ",err=", err)
 	}
 	trace.End(wCtx, err)

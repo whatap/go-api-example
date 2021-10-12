@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -22,8 +23,9 @@ func httpGet(callUrl string) (int, error) {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 		// 결과 출력
-		if data, err := ioutil.ReadAll(resp.Body); err == nil {
-			fmt.Printf("%s\n", string(data))
+		//if data, err := ioutil.ReadAll(resp.Body); err == nil {
+		if _, err := ioutil.ReadAll(resp.Body); err == nil {
+			//fmt.Printf("%s\n", string(data))
 		} else {
 			fmt.Println(err)
 		}
@@ -42,8 +44,9 @@ func httpPost(callUrl, body string) (int, error) {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 		// Response 체크.
-		if data, err := ioutil.ReadAll(resp.Body); err == nil {
-			fmt.Printf("%s\n", string(data))
+		//if data, err := ioutil.ReadAll(resp.Body); err == nil {
+		if _, err := ioutil.ReadAll(resp.Body); err == nil {
+			//fmt.Printf("%s\n", string(data))
 		} else {
 			fmt.Println(err)
 		}
@@ -70,6 +73,7 @@ func httpWithRequest(method string, callUrl string, body string, headers map[str
 		}
 		if resp, err := client.Do(req); err == nil {
 			defer resp.Body.Close()
+			//fmt.Println("status=", resp.StatusCode)
 			fmt.Println("status=", resp.StatusCode)
 			return resp.StatusCode, err
 		} else {
@@ -111,14 +115,22 @@ func getKV(str, div string) (string, string) {
 	return kv[0], kv[1]
 }
 func main() {
-	trace.Init(nil)
+	udpPortPtr := flag.Int("up", 6600, "part ")
+	flag.Parse()
+	udpPort := *udpPortPtr
+
+	config := make(map[string]string)
+	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+
+	trace.Init(config)
 	//It must be executed before closing the app.
 	defer trace.Shutdown()
 	ctx := context.Background()
 
-	callUrl := "https://www.google.com"
 	wCtx, _ := trace.Start(ctx, "Http call")
 	defer trace.End(wCtx, nil)
+
+	callUrl := "https://www.google.com"
 
 	mCtx, _ := httpc.Start(wCtx, callUrl)
 	if statusCode, err := httpGet(callUrl); err == nil {

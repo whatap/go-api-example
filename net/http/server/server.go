@@ -108,13 +108,15 @@ func getMysql(ctx context.Context) ([]string, error) {
 }
 
 func main() {
-	portPtr := flag.Int("p", 8080, "part ")
+	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
+	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	flag.Parse()
 	port := *portPtr
+	udpPort := *udpPortPtr
 
-	trace.Init(make(map[string]string))
-
-	fmt.Println("Start")
+	config := make(map[string]string)
+	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+	trace.Init(config)
 
 	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		wCtx, _ := trace.StartWithRequest(r)
@@ -267,7 +269,7 @@ func main() {
 
 	}))
 
-	fmt.Println("Start :", port)
+	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 
 	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

@@ -1,1 +1,5 @@
 net/http/server/server.exe
+database/sql/sql.exe
+google.golang.org/grpc/client/client.exe
+google.golang.org/grpc/server/server.exe
+net/http/client/client.exe

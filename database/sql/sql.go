@@ -12,9 +12,9 @@ import (
 
 func getMysql(ctx context.Context) ([]string, error) {
 
-	wCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
+	sqlCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
 	db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-	whatapsql.End(wCtx, err)
+	whatapsql.End(sqlCtx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -23,9 +23,9 @@ func getMysql(ctx context.Context) ([]string, error) {
 	// 복수 Row를 갖는 SQL 쿼리
 	var id int
 	var subject string
-	wCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", "select id, subject from tbl_faq limit 10")
+	sqlCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", "select id, subject from tbl_faq limit 10")
 	rows, err := db.QueryContext(ctx, "select id, subject from tbl_faq limit 10")
-	whatapsql.End(wCtx, err)
+	whatapsql.End(sqlCtx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +47,10 @@ func getMysql(ctx context.Context) ([]string, error) {
 func main() {
 	trace.Init(nil)
 	defer trace.Shutdown()
-	ctx := context.Background()
-	wCtx, _ := trace.Start(ctx, "example-sql")
-	result, err := getMysql(wCtx)
+	ctx, _ := trace.Start(context.Background(), "example-sql")
+	result, err := getMysql(ctx)
 	if err != nil {
 		fmt.Println("Error GetMysql() len=", len(result), ",err=", err)
 	}
-	trace.End(wCtx, err)
+	trace.End(ctx, err)
 }

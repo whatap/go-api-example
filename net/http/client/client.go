@@ -125,46 +125,45 @@ func main() {
 	trace.Init(config)
 	//It must be executed before closing the app.
 	defer trace.Shutdown()
-	ctx := context.Background()
 
-	wCtx, _ := trace.Start(ctx, "Http call")
-	defer trace.End(wCtx, nil)
+	ctx, _ := trace.Start(context.Background(), "Http call")
+	defer trace.End(ctx, nil)
 
 	callUrl := "https://www.google.com"
 
-	mCtx, _ := httpc.Start(wCtx, callUrl)
+	httpcCtx, _ := httpc.Start(ctx, callUrl)
 	if statusCode, err := httpGet(callUrl); err == nil {
-		httpc.End(mCtx, statusCode, "", nil)
+		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
-		httpc.End(mCtx, -1, "", err)
+		httpc.End(httpcCtx, -1, "", err)
 	}
 
-	mCtx, _ = httpc.Start(wCtx, callUrl)
+	httpcCtx, _ = httpc.Start(ctx, callUrl)
 	if statusCode, err := httpPost(callUrl, ""); err == nil {
-		httpc.End(mCtx, statusCode, "", nil)
+		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
-		httpc.End(mCtx, -1, "", err)
+		httpc.End(httpcCtx, -1, "", err)
 	}
 
-	mCtx, _ = httpc.Start(wCtx, callUrl)
+	httpcCtx, _ = httpc.Start(ctx, callUrl)
 	if statusCode, err := httpWithRequest("GET", callUrl, "body", nil); err == nil {
-		httpc.End(mCtx, statusCode, "", nil)
+		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
-		httpc.End(mCtx, -1, "", err)
+		httpc.End(httpcCtx, -1, "", err)
 	}
 
-	mCtx, _ = httpc.Start(wCtx, callUrl)
+	httpcCtx, _ = httpc.Start(ctx, callUrl)
 	if statusCode, err := httpWithRequest("POST", callUrl, "body", nil); err == nil {
-		httpc.End(mCtx, statusCode, "", nil)
+		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
-		httpc.End(mCtx, -1, "", err)
+		httpc.End(httpcCtx, -1, "", err)
 	}
 
-	mCtx, _ = httpc.Start(wCtx, callUrl)
+	httpcCtx, _ = httpc.Start(ctx, callUrl)
 	if statusCode, err := httpPostForm(callUrl, ""); err == nil {
-		httpc.End(mCtx, statusCode, "", nil)
+		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
-		httpc.End(mCtx, -1, "", err)
+		httpc.End(httpcCtx, -1, "", err)
 	}
 	fmt.Println("Exit")
 }

@@ -12,5 +12,3 @@ require (
 	google.golang.org/grpc/examples v0.0.0-20211028161633-d47437c91e79 // indirect
 	google.golang.org/protobuf v1.27.1
 )
-
-replace github.com/whatap/go-api => ../go-api

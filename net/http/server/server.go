@@ -119,8 +119,8 @@ func main() {
 	trace.Init(config)
 
 	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		wCtx, _ := trace.StartWithRequest(r)
-		defer trace.End(wCtx, nil)
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
 		// if wErr != nil {
 		// 	fmt.Println("Trace start error ", wErr)
 		// }
@@ -136,43 +136,43 @@ func main() {
 		reply := "/index <br/>Test Body"
 
 		_, _ = w.Write(([]byte)(reply))
-		trace.Step(wCtx, "Text Message", "Message", 3, 3)
+		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
-		getUser(wCtx)
+		getUser(ctx)
 		fmt.Println("Response -", r.Response)
 
 	})
 
 	http.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
-		wCtx, _ := trace.StartWithRequest(r)
-		defer trace.End(wCtx, nil)
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
 		w.Header().Add("Content-Type", "text/html")
 
 		fmt.Println("Request -", r)
 		reply := "/main <br/>Test Body"
 		_, _ = w.Write(([]byte)(reply))
-		trace.Step(wCtx, "Text Message 2", "Message2", 6, 6)
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)
 	})
 
 	http.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
-		wCtx, _ := trace.StartWithRequest(r)
-		defer trace.End(wCtx, nil)
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
 		w.Header().Add("Content-Type", "text/html")
 		fmt.Println("Request -", r)
 		callUrl := "http://localhost:8081/index"
-		mCtx, _ := httpc.Start(wCtx, callUrl)
+		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
-		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.MTrace(mCtx)); err == nil {
-			httpc.End(mCtx, statusCode, "", nil)
+		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
+			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
 		} else {
-			httpc.End(mCtx, -1, "", err)
+			httpc.End(httpcCtx, -1, "", err)
 			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
 		}
 
 		_, _ = w.Write(buffer.Bytes())
-		trace.Step(wCtx, "Text Message 2", "Message2", 6, 6)
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)
 	})
 
@@ -198,9 +198,9 @@ func main() {
 		var buffer bytes.Buffer
 		var query string
 
-		wCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
+		sqlCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
 		db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-		whatapsql.End(wCtx, err)
+		whatapsql.End(sqlCtx, err)
 		if err != nil {
 			return
 		}
@@ -210,9 +210,9 @@ func main() {
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
-		wCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query)
+		sqlCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query)
 		rows, err := db.QueryContext(ctx, query)
-		whatapsql.End(wCtx, err)
+		whatapsql.End(sqlCtx, err)
 		if err != nil {
 			return
 		}
@@ -239,9 +239,9 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
-		wCtx, _ = whatapsql.StartWithParamArray(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params)
+		sqlCtx, _ = whatapsql.StartWithParamArray(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params)
 		rows1, err1 := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(wCtx, err1)
+		whatapsql.End(sqlCtx, err1)
 		defer rows1.Close()
 
 		for rows1.Next() {
@@ -252,9 +252,9 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		wCtx, _ = whatapsql.StartWithParam(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, fmt.Sprintln(8, ",", 1))
+		sqlCtx, _ = whatapsql.StartWithParam(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params...)
 		rows2, err2 := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(wCtx, err2)
+		whatapsql.End(sqlCtx, err2)
 		defer rows2.Close()
 
 		for rows1.Next() {

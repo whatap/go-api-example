@@ -117,6 +117,7 @@ func main() {
 	config := make(map[string]string)
 	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 	trace.Init(config)
+	defer trace.Shutdown()
 
 	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)

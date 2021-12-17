@@ -23,8 +23,8 @@ import (
 )
 
 func getUser(ctx context.Context) {
-	wCtx, _ := method.Start(ctx, "getUser")
-	defer method.End(wCtx, nil)
+	methodCtx, _ := method.Start(ctx, "getUser")
+	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 

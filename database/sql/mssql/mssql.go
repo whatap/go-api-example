@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"time"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/whatap/go-api/instrumentation/database/sql/whatapsql"
@@ -95,7 +94,6 @@ func main() {
 		}
 		defer db.Close()
 
-		trace.Step(ctx, "db.Query", "call db.Query ", 0, 0)
 		// 복수 Row를 갖는 SQL 쿼리
 		var id int
 		var subject string
@@ -115,7 +113,6 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 		}
 
-		trace.Step(ctx, "db.QueryContext", "call db.QueryContext ", 0, 0)
 		// 복수 Row를 갖는 SQL 쿼리
 		rows, err = db.QueryContext(ctx, "select top 10 id, subject from testTbl1")
 		if err != nil {
@@ -155,7 +152,6 @@ func main() {
 		var id int
 		var subject string
 
-		trace.Step(ctx, "db.QueryRow", "call db.QueryRow ", 0, 0)
 		row := db.QueryRow("select top 10 id, subject from testTbl1 ")
 		// Scan and close
 		if err := row.Scan(&id, &subject); err != nil {
@@ -165,7 +161,6 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 		}
 
-		trace.Step(ctx, "db.QueryRowContext", "call db.QueryRowContext ", 0, 0)
 		row = db.QueryRowContext(ctx, "select top 10 id, subject from testTbl1 ")
 		// Scan and close
 		if err := row.Scan(&id, &subject); err != nil {
@@ -203,9 +198,7 @@ func main() {
 
 		query := "select top 10 id, subject from testTbl1 where id in (?,?) "
 
-		trace.Step(ctx, "db.Prepare", "call db.Prepare ", 0, 0)
 		if stmt, err := db.Prepare(query); err == nil {
-			trace.Step(ctx, "stmt.Query", "call stmt.Query", 0, 0)
 			if rows, err1 := stmt.Query(params...); err1 == nil {
 				defer rows.Close()
 				for rows.Next() {
@@ -220,7 +213,6 @@ func main() {
 				fmt.Println("Error stmt.Query ", err1)
 			}
 
-			trace.Step(ctx, "stmt.QueryContext", "call stmt.QueryContext ", 0, 0)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err == nil {
 				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 				for rows.Next() {
@@ -238,9 +230,7 @@ func main() {
 			fmt.Println("Error db.Prepare ", err)
 		}
 
-		trace.Step(ctx, "db.PrepareContext", "call db.PrepareContext ", 0, 0)
 		if stmt, err := db.PrepareContext(ctx, query); err == nil {
-			trace.Step(ctx, "db.Query", "call db.Query ", 0, 0)
 			if rows, err1 := stmt.Query(params...); err1 == nil {
 				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
@@ -256,7 +246,6 @@ func main() {
 				fmt.Println("Error stmt.QueryContext ", err1)
 			}
 
-			trace.Step(ctx, "db.QueryContext", "call db.QueryContext ", 0, 0)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
 				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
@@ -278,9 +267,7 @@ func main() {
 
 		query = "select top 1 id, subject from testTbl1 where id in (?,?)"
 
-		trace.Step(ctx, "db.Prepare", "call db.Prepare ", 0, 0)
 		if stmt, err := db.Prepare(query); err == nil {
-			trace.Step(ctx, "stmt.QueryRow", "call stmt.Query", 0, 0)
 			row := stmt.QueryRow(params...)
 			if err1 := row.Scan(&id, &subject); err1 == nil {
 				fmt.Println(id, subject)
@@ -289,7 +276,6 @@ func main() {
 				fmt.Println("Error row.Scan ", err1)
 			}
 
-			trace.Step(ctx, "stmt.QueryRowContext", "call stmt.QueryRowContext", 0, 0)
 			row = stmt.QueryRowContext(ctx, params...)
 			if err1 := row.Scan(&id, &subject); err1 == nil {
 				fmt.Println(id, subject)
@@ -302,16 +288,13 @@ func main() {
 		}
 
 		query = "update top 1 testTbl1 set subject='aaa' where id in (?,?) "
-		trace.Step(ctx, "db.Prepare", "call db.Prepare ", 0, 0)
 		if stmt, err := db.Prepare(query); err == nil {
-			trace.Step(ctx, "stmt.Exec", "call stmt.Exec", 0, 0)
 			if res, err1 := stmt.Exec(params...); err1 == nil {
 				fmt.Println("Result ", res)
 			} else {
 				fmt.Println("Error stmt.Exec ", err1)
 			}
 
-			trace.Step(ctx, "stmt.ExecContext", "call stmt.Exec", 0, 0)
 			if res, err1 := stmt.ExecContext(ctx, params...); err1 == nil {
 				fmt.Println("Result ", res)
 			} else {
@@ -321,7 +304,6 @@ func main() {
 			fmt.Println("Error db.Prepare ", err)
 		}
 		_, _ = w.Write(buffer.Bytes())
-		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		fmt.Println("Response -", r.Response)
 	}))
@@ -347,9 +329,7 @@ func main() {
 		params := make([]interface{}, 0)
 		params = append(params, sql.Named("idx1", 8))
 		params = append(params, sql.Named("idx2", 1))
-		trace.Step(ctx, "db.Prepare", "call db.Prepare ", 0, 0)
 		if stmt, err := db.Prepare(query); err == nil {
-			trace.Step(ctx, "stmt.QueryContext", "call db.Prepare ", 0, 0)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
 				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
@@ -373,7 +353,6 @@ func main() {
 		}
 		// 복수 Row를 갖는 SQL 쿼리
 		_, _ = w.Write(buffer.Bytes())
-		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		fmt.Println("Response -", r.Response)
 	}))
@@ -400,7 +379,6 @@ func main() {
 		params = append(params, 1)
 
 		query := "update testTbl1 set subject = 'aaa' where id in (?,?)"
-		trace.Step(ctx, "db.Exec", "call db.Exec ", 0, 0)
 		if res, err := db.Exec(query, params...); err == nil {
 			fmt.Println("Result ", res)
 			buffer.WriteString(fmt.Sprintln("Result ", res, "<br>"))
@@ -408,7 +386,6 @@ func main() {
 			fmt.Println("Error db.Exec ", err)
 		}
 
-		trace.Step(ctx, "db.ExecContext", "call db.Exec ", 0, 0)
 		if res, err := db.ExecContext(ctx, query, params...); err == nil {
 			fmt.Println("Result ", res)
 			buffer.WriteString(fmt.Sprintln("Result ", res, "<br>"))
@@ -417,7 +394,6 @@ func main() {
 		}
 
 		_, _ = w.Write(buffer.Bytes())
-		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		fmt.Println("Response -", r.Response)
 	}))
@@ -444,14 +420,9 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
-		trace.Step(ctx, "BeginTx", "call db.BeginTx", 0, 0)
-		time.Sleep(10 * time.Millisecond)
 		if tx, err := db.BeginTx(ctx, nil); err == nil {
 
 			query = "update testTbl1 set subject = 'bbb' where id in (?,?)"
-			time.Sleep(100 * time.Millisecond)
-			trace.Step(ctx, "tx.Exec", "call tx.Exec", 0, 0)
-			time.Sleep(100 * time.Millisecond)
 			if res, err := tx.Exec(query, params...); err != nil {
 				fmt.Println("Error tx.Exec ", err)
 			} else {
@@ -460,9 +431,6 @@ func main() {
 
 			query = "select id, subject from testTbl1 where id in (?,?)"
 
-			time.Sleep(100 * time.Millisecond)
-			trace.Step(ctx, "tx.Query", "call tx.Query", 0, 0)
-			time.Sleep(100 * time.Millisecond)
 			rows, err := tx.Query(query, params...)
 			if err != nil {
 				fmt.Println("Error tx.Query ", err)
@@ -480,9 +448,6 @@ func main() {
 			}
 
 			query = "update testTbl1 set subject = 'ccc' where id in (?,?)"
-			time.Sleep(100 * time.Millisecond)
-			trace.Step(ctx, "tx.ExecContext", "call tx.ExecContext", 0, 0)
-			time.Sleep(100 * time.Millisecond)
 			if res, err := tx.ExecContext(ctx, query, params...); err != nil {
 				fmt.Println("Error tx.ExecContext ", err)
 			} else {
@@ -491,9 +456,6 @@ func main() {
 
 			query = "select id, subject from testTbl1 where id in (?,?)"
 
-			time.Sleep(100 * time.Millisecond)
-			trace.Step(ctx, "tx.QueryContext", "call tx.QueryContext", 0, 0)
-			time.Sleep(100 * time.Millisecond)
 			rows, err = tx.QueryContext(ctx, query, params...)
 			if err != nil {
 				fmt.Println("Error tx.QueryContext ", err)
@@ -516,7 +478,6 @@ func main() {
 		}
 
 		_, _ = w.Write(buffer.Bytes())
-		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		fmt.Println("Response -", r.Response)
 	}))

@@ -12,7 +12,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"github.com/whatap/go-api/httpc"
+	"github.com/whatap/go-api/instrumentation/github.com/gorilla/mux/whatapmux"
 	"github.com/whatap/go-api/method"
 	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
@@ -119,17 +121,12 @@ func main() {
 	trace.Init(config)
 	defer trace.Shutdown()
 
-	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
-		// if wErr != nil {
-		// 	fmt.Println("Trace start error ", wErr)
-		// }
-		// defer func() {
-		// 	if err := trace.End(ctx, nil); err != nil {
-		// 		fmt.Println("Error ", err)
-		// 	}
-		// }()
+	r := mux.NewRouter()
+	r.Use(whatapmux.Middleware())
+	subs := r.PathPrefix("/subs").Subrouter()
+
+	r.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		fmt.Println("Request -", r)
 
 		w.Header().Add("Content-Type", "text/html")
@@ -144,9 +141,8 @@ func main() {
 
 	})
 
-	http.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	r.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 
 		fmt.Println("Request -", r)
@@ -156,9 +152,8 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
-	http.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	r.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		fmt.Println("Request -", r)
 		callUrl := "http://localhost:8081/index"
@@ -177,7 +172,7 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
-	http.HandleFunc("/wrapHandleFunc", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wrapHandleFunc", trace.Func(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc")
@@ -185,7 +180,7 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
 	}))
 
-	http.Handle("/wrapHandleFunc1", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wrapHandleFunc1", trace.Func(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc1")
@@ -193,7 +188,7 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
 	}))
 
-	http.Handle("/sql/select", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/sql/select", trace.Func(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
@@ -270,7 +265,33 @@ func main() {
 
 	}))
 
+	subs.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		fmt.Println("Request -", r)
+
+		w.Header().Add("Content-Type", "text/html")
+
+		reply := "/subs/index <br/>Test Body"
+
+		_, _ = w.Write(([]byte)(reply))
+		trace.Step(ctx, "Text Message", "Message", 3, 3)
+
+		getUser(ctx)
+		fmt.Println("Response -", r.Response)
+
+	})
+
+	subs.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		w.Header().Add("Content-Type", "text/html")
+
+		fmt.Println("Request -", r)
+		reply := "/subs/main <br/>Test Body"
+		_, _ = w.Write(([]byte)(reply))
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 
-	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }

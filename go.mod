@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/denisenkom/go-mssqldb v0.11.0
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
@@ -14,5 +15,3 @@ require (
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 )
-
-replace github.com/whatap/go-api => ../go-api

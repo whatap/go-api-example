@@ -9,6 +9,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/labstack/echo v3.3.10+incompatible
+	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/lib/pq v1.10.4
 	github.com/whatap/go-api v0.1.6
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect

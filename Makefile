@@ -1,6 +1,9 @@
 
 
-all: http database_sql grpc gin gorilla echo 
+all: mod_download http database_sql grpc gin gorilla echo 
+
+mod_download:
+	go mod download -x
 
 database_sql:
 	#echo "database/sql"

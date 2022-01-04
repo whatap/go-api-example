@@ -11,9 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/whatap/go-api/httpc"
+	"github.com/whatap/go-api/instrumentation/github.com/gin-gonic/gin/whatapgin"
 	"github.com/whatap/go-api/method"
+
 	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
 )
@@ -119,48 +123,38 @@ func main() {
 	trace.Init(config)
 	defer trace.Shutdown()
 
-	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
-		// if wErr != nil {
-		// 	fmt.Println("Trace start error ", wErr)
-		// }
-		// defer func() {
-		// 	if err := trace.End(ctx, nil); err != nil {
-		// 		fmt.Println("Error ", err)
-		// 	}
-		// }()
-		fmt.Println("Request -", r)
+	r := gin.Default()
+	r.Use(whatapgin.Middleware())
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "ok",
+		})
+	})
+	r.GET("/index", func(c *gin.Context) {
+		fmt.Println("Request -", c.Request)
 
-		w.Header().Add("Content-Type", "text/html")
-
-		reply := "/index <br/>Test Body"
-
-		_, _ = w.Write(([]byte)(reply))
+		ctx := c.Request.Context()
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		getUser(ctx)
-		fmt.Println("Response -", r.Response)
-
+		c.JSON(http.StatusOK, gin.H{
+			"message": "/index <br/>Test Body",
+		})
 	})
 
-	http.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
-		w.Header().Add("Content-Type", "text/html")
-
-		fmt.Println("Request -", r)
-		reply := "/main <br/>Test Body"
-		_, _ = w.Write(([]byte)(reply))
+	r.GET("/main", func(c *gin.Context) {
+		fmt.Println("Request -", c.Request)
+		ctx := c.Request.Context()
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
-		fmt.Println("Response -", r.Response)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "/main <br/>Test Body",
+		})
 	})
 
-	http.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
-		w.Header().Add("Content-Type", "text/html")
-		fmt.Println("Request -", r)
+	r.GET("/httpc", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		fmt.Println("Request -", c.Request)
+
 		callUrl := "http://localhost:8081/index"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
@@ -172,30 +166,14 @@ func main() {
 			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
 		}
 
-		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
-		fmt.Println("Response -", r.Response)
+		c.JSON(http.StatusOK, gin.H{
+			"message": string(buffer.Bytes()),
+		})
 	})
 
-	http.HandleFunc("/wrapHandleFunc", trace.Func(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/html")
-		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc")
-		_, _ = w.Write(buffer.Bytes())
-		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
-	}))
-
-	http.Handle("/wrapHandleFunc1", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/html")
-		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc1")
-		_, _ = w.Write(buffer.Bytes())
-		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
-	}))
-
-	http.Handle("/sql/select", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		w.Header().Add("Content-Type", "text/html")
+	r.GET("/sql/select", func(c *gin.Context) {
+		ctx := c.Request.Context()
 		var buffer bytes.Buffer
 		var query string
 
@@ -203,6 +181,9 @@ func main() {
 		db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
 		whatapsql.End(sqlCtx, err)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
 			return
 		}
 		defer db.Close()
@@ -215,6 +196,9 @@ func main() {
 		rows, err := db.QueryContext(ctx, query)
 		whatapsql.End(sqlCtx, err)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
 			return
 		}
 		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
@@ -222,6 +206,9 @@ func main() {
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
 			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": err.Error(),
+				})
 				return
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
@@ -231,6 +218,9 @@ func main() {
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.Prepare(query)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
 			return
 		}
 		defer stmt.Close()
@@ -248,6 +238,9 @@ func main() {
 		for rows1.Next() {
 			err := rows1.Scan(&id, &subject)
 			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": err.Error(),
+				})
 				return
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
@@ -259,18 +252,22 @@ func main() {
 		defer rows2.Close()
 
 		for rows1.Next() {
-			err := rows1.Scan(&id, &subject)
+			err := rows2.Scan(&id, &subject)
 			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": err.Error(),
+				})
 				return
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		_, _ = w.Write(buffer.Bytes())
-
-	}))
+		c.JSON(http.StatusOK, gin.H{
+			"message": string(buffer.Bytes()),
+		})
+	})
 
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
+	r.Run(fmt.Sprintf(":%d", port))
 
-	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

@@ -6,6 +6,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.11.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/godror/godror v0.29.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/labstack/echo v3.3.10+incompatible

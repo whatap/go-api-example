@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/whatap/go-api/httpc"
+	"github.com/whatap/go-api/instrumentation/net/http/whataphttp"
 	"github.com/whatap/go-api/trace"
 )
 
@@ -58,7 +59,7 @@ func httpPost(callUrl, body string) (int, error) {
 
 }
 
-func httpWithRequest(method string, callUrl string, body string, headers map[string]string) (int, error) {
+func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
 	client := http.Client{
@@ -67,8 +68,8 @@ func httpWithRequest(method string, callUrl string, body string, headers map[str
 
 	if req, err := http.NewRequest(strings.ToUpper(method), callUrl, bytes.NewBufferString(body)); err == nil {
 		if headers != nil {
-			for key, val := range headers {
-				req.Header.Add(key, val)
+			for key, _ := range headers {
+				req.Header.Add(key, headers.Get(key))
 			}
 		}
 		if resp, err := client.Do(req); err == nil {
@@ -121,6 +122,8 @@ func main() {
 
 	config := make(map[string]string)
 	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+	config["mtrace_enabled"] = "true"
+	config["mtrace_rate"] = "100"
 
 	trace.Init(config)
 	//It must be executed before closing the app.
@@ -165,5 +168,15 @@ func main() {
 	} else {
 		httpc.End(httpcCtx, -1, "", err)
 	}
+
+	callUrl = "http://localhost:8081/httpc"
+	client := http.DefaultClient
+	client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
+	resp, err := client.Get(callUrl)
+	if err != nil {
+		fmt.Printf("Error %s", err.Error())
+	}
+	defer resp.Body.Close()
+
 	fmt.Println("Exit")
 }

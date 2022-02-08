@@ -7,6 +7,7 @@ mod_download:
 
 database_sql:
 	#echo "database/sql"
+	go build -o database/sql/ database/sql/sql.go
 	go build -o database/sql/mysql/ database/sql/mysql/mysql.go
 	go build -o database/sql/mssql/ database/sql/mssql/mssql.go
 	go build -o database/sql/pgsql/ database/sql/pgsql/pgsql.go

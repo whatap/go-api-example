@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/whatap/go-api/httpc"
+	"github.com/whatap/go-api/instrumentation/net/http/whataphttp"
 	"github.com/whatap/go-api/method"
 	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
@@ -177,7 +178,34 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
-	http.HandleFunc("/wrapHandleFunc", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/roundTripper", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("wrapHandleFunc")
+
+		callUrl := "http://localhost:8081/index"
+
+		client := http.DefaultClient
+		client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
+		resp, err := client.Get(callUrl)
+		if err == nil {
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			fmt.Printf("Error %s", err.Error())
+		}
+		defer resp.Body.Close()
+
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+
+	http.HandleFunc("/wrapHandleFunc", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc")
@@ -185,7 +213,7 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
 	}))
 
-	http.Handle("/wrapHandleFunc1", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/wrapHandleFunc1", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc1")
@@ -193,7 +221,7 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
 	}))
 
-	http.Handle("/sql/select", trace.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/sql/select", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer

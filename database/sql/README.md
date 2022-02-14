@@ -16,15 +16,15 @@ func End(sqlCtx *SqlCtx, err error) error
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-    whatapsql "github.com/whatap/go-api/sql"
+	whatapsql "github.com/whatap/go-api/sql"
 )
 
 func main() {
-    config := make(map[string]string)
-    trace.Init(config)
+	config := make(map[string]string)
+	trace.Init(config)
 	//It must be executed before closing the app.
 	defer trace.Shutdown()
-    
+	   
 	sqlCtx, _ := whatapsql.StartOpen(ctx, dataSource)
 	db, err := sql.Open(mysql, dataSource)
 	whatapsql.End(sqlCtx, err)
@@ -34,7 +34,7 @@ func main() {
 		return
 	}
 	defer db.Close()
-
+	
 	// 복수 Row를 갖는 SQL 쿼리
 	var id int
 	var subject string
@@ -49,7 +49,7 @@ func main() {
 		return
 	}
 	defer rows.Close() //반드시 닫는다 (지연하여 닫기)
-
+	
 	for rows.Next() {
 		err := rows.Scan(&id, &subject)
 		if err != nil {
@@ -58,7 +58,6 @@ func main() {
 		fmt.Println(id, subject)
 		buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 	}
-	
 }        
 ```
 
@@ -75,34 +74,34 @@ trace.Start()를 통해 TraceCtx는 생성됩니다.
 ```
 import (
 	"database/sql"
-    _ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/whatap/go-api/instrumentation/database/sql/whatapsql"
 )
 
 
 func main() {
-    config := make(map[string]string)
-    trace.Init(config)
-    defer trace.Shutdown()
-    
-    // whataphttp.Func 내부에서 whatap TraceCtx를 생성합니다. 
-    http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
-        ctx := r.Context()
-        
-        // Use WhaTap Driver. whatap의 TraceCtx가 있는 context 를 전달합니다. 
-        db, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
-	    	if err != nil {
-	    		fmt.Println("Error whatapsql.Open ", err)
-	    		return
-	    	}
-	    	defer db.Close()
-
-	    ... 
-	    query := "select id, subject from tbl_faq limit 10"
-	    
-	    // whatap TraceCtx가 있는 context 를 전달합니다. 
-	    if rows, err := db.QueryContext(ctx, query); err == nil {
-		    ...
+	config := make(map[string]string)
+	trace.Init(config)
+	defer trace.Shutdown()
+	
+	// whataphttp.Func 내부에서 whatap TraceCtx를 생성합니다. 
+	http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		
+		// Use WhaTap Driver. whatap의 TraceCtx가 있는 context 를 전달합니다. 
+		db, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
+		if err != nil {
+		fmt.Println("Error whatapsql.Open ", err)
+		return
+		}
+		defer db.Close()
+		
+		... 
+		query := "select id, subject from tbl_faq limit 10"
+		
+		// whatap TraceCtx가 있는 context 를 전달합니다. 
+		if rows, err := db.QueryContext(ctx, query); err == nil {
+		...
 		}
 	}
 	

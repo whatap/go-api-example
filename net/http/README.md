@@ -3,6 +3,12 @@
 ## Server
 
 ### 웹 트랜잭션 추적
+http.Hand, http.HandleFunc 을 감싸는 Wrapping 함수를 사용합니다. 
+
+whataphttp.HandlerFunc(), whataphttp.Func() 
+
+내부에서 whatap traceCtx 를 생성하여 추가한 context 를 request에 설정합니다. 
+이후 context 는 r.Context()를 사용합니다.
 
 ```
 // wrapping type of http.HanderFunc, example : http.Handle(pattern, http.HandlerFunc)

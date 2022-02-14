@@ -69,8 +69,6 @@ PrepareContext, QueryContext, ExecContext 등 context를 전달하는 함수를 
 전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.  
 trace.Start()를 통해 TraceCtx는 생성됩니다.
 
-# 설치 안내 
-
 ```
 import (
 	"database/sql"

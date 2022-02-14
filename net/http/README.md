@@ -1,7 +1,8 @@
 #  net/http
 
+## Server
 
-## 웹 트랜잭션 추적
+### 웹 트랜잭션 추적
 
 ```
 // wrapping type of http.HanderFunc, example : http.Handle(pattern, http.HandlerFunc)
@@ -59,7 +60,14 @@ func main(){
 }
 ```
 
-## RoundTripper 
+## Client
+
+### 
+
+
+
+
+### RoundTripper 
 
 ```
 import (
@@ -75,7 +83,6 @@ func main(){
 	
 	ctx, _ := trace.Start(context.Background(), "Http call")
 	defer trace.End(ctx, nil)
-	
 	
 	callUrl = "http://localhost:8081/httpc"
 	client := http.DefaultClient

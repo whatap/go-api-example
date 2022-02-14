@@ -62,12 +62,45 @@ func main(){
 
 ## Client
 
-### 
+httpc.Start(), httpc.End() 함수로 추적할 수 있습니다. 
 
+```
+func Start(ctx context.Context, url string) (*HttpcCtx, error)
+func End(httpcCtx *HttpcCtx, status int, reason string, err error) error
 
+```
+
+import (
+	"github.com/whatap/go-api/httpc"
+)
+
+func main(){
+    config := make(map[string]string)
+	trace.Init(config)
+	//It must be executed before closing the app.
+	defer trace.Shutdown()
+	
+	ctx, _ := trace.Start(context.Background(), "Http call")
+	defer trace.End(ctx, nil)
+    
+    callUrl := "http://localhost:8081/index"
+	httpcCtx, _ := httpc.Start(ctx, callUrl)
+	if resp, err := http.Get(callUrl); err == nil {
+		defer resp.Body.Close()
+        httpc.End(httpcCtx, resp.StatusCode, "", err)
+    } else {
+        httpc.End(httpcCtx, resp.StatusCode, "", err)
+    }
+}
+```
 
 
 ### RoundTripper 
+
+RoundTripper 미들웨어를 설정하여 http call을 추적할 수 있습니다. 
+
+전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.  
+trace.Start()를 통해 TraceCtx는 생성됩니다.
 
 ```
 import (

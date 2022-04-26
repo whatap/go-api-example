@@ -172,23 +172,23 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
-	r.HandleFunc("/wrapHandleFunc", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wrapHandleFunc", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
-	}))
+	})
 
-	r.HandleFunc("/wrapHandleFunc1", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wrapHandleFunc1", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
 		buffer.WriteString("wrapHandleFunc1")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
-	}))
+	})
 
-	r.HandleFunc("/sql/select", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/sql/select", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
@@ -263,7 +263,14 @@ func main() {
 
 		_, _ = w.Write(buffer.Bytes())
 
-	}))
+	})
+
+	r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Request -", r)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Add("Content-Type", "text/html")
+		panic(fmt.Errorf("custom panic"))
+	})
 
 	subs.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

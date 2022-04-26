@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/whatap/go-api/httpc"
 	"github.com/whatap/go-api/instrumentation/github.com/labstack/echo/whatapecho"
@@ -124,7 +125,9 @@ func main() {
 	defer trace.Shutdown()
 
 	e := echo.New()
-	e.Use(whatapecho.Middleware())
+	e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
+	e.Pre(whatapecho.Middleware())
+	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!\n")
@@ -243,7 +246,10 @@ func main() {
 		return c.String(http.StatusOK, string(buffer.Bytes()))
 
 	})
-
+	e.GET("/panic", func(c echo.Context) error {
+		panic(fmt.Errorf("custom panic"))
+		return c.String(http.StatusOK, "Hello, World!\n")
+	})
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 	e.Start(fmt.Sprintf(":%d", port))
 }

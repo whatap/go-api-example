@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -14,9 +13,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/whatap/go-api/httpc"
+	wisql "github.com/whatap/go-api/instrumentation/database/sql/whatapsql"
 	"github.com/whatap/go-api/instrumentation/github.com/gorilla/mux/whatapmux"
 	"github.com/whatap/go-api/method"
-	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
 )
 
@@ -79,47 +78,26 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 	}
 }
 
-func getMysql(ctx context.Context) ([]string, error) {
-
-	db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	// 복수 Row를 갖는 SQL 쿼리
-	var id int
-	var subject string
-	rows, err := db.QueryContext(ctx, "select id, subject from tbl_faq limit 10")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close() //반드시 닫는다 (지연하여 닫기)
-
-	result := make([]string, 0)
-
-	for rows.Next() {
-		err := rows.Scan(&id, &subject)
-		if err != nil {
-			return result, err
-		}
-		fmt.Println(id, subject)
-		result = append(result, fmt.Sprintln(id, subject, "<br>"))
-	}
-	return result, nil
-}
-
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
+	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo1:3306)/doremimaker", " dataSourceName ")
 	flag.Parse()
 	port := *portPtr
 	udpPort := *udpPortPtr
+	dataSource := *dataSourcePtr
 
 	config := make(map[string]string)
 	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 	trace.Init(config)
 	defer trace.Shutdown()
+
+	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
+	if err != nil {
+		fmt.Println("Error service whatapsql.Open ", err)
+		return
+	}
+	defer db.Close()
 
 	r := mux.NewRouter()
 	r.Use(whatapmux.Middleware())
@@ -194,21 +172,11 @@ func main() {
 		var buffer bytes.Buffer
 		var query string
 
-		sqlCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-		db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-		whatapsql.End(sqlCtx, err)
-		if err != nil {
-			return
-		}
-		defer db.Close()
-
 		// 복수 Row를 갖는 SQL 쿼리
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
-		sqlCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query)
 		rows, err := db.QueryContext(ctx, query)
-		whatapsql.End(sqlCtx, err)
 		if err != nil {
 			return
 		}
@@ -224,7 +192,7 @@ func main() {
 
 		// Prepared Statement 생성
 		query = "select id, subject from tbl_faq where id = ? limit ?"
-		stmt, err := db.Prepare(query)
+		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
 			return
 		}
@@ -235,9 +203,7 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
-		sqlCtx, _ = whatapsql.StartWithParamArray(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params)
-		rows1, err1 := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(sqlCtx, err1)
+		rows1, _ := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
 		defer rows1.Close()
 
 		for rows1.Next() {
@@ -248,9 +214,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		sqlCtx, _ = whatapsql.StartWithParam(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params...)
-		rows2, err2 := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(sqlCtx, err2)
+		rows2, _ := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
 		defer rows2.Close()
 
 		for rows1.Next() {

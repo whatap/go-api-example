@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -18,7 +17,7 @@ import (
 	"github.com/whatap/go-api/instrumentation/github.com/gin-gonic/gin/whatapgin"
 	"github.com/whatap/go-api/method"
 
-	whatapsql "github.com/whatap/go-api/sql"
+	wisql "github.com/whatap/go-api/instrumentation/database/sql/whatapsql"
 	"github.com/whatap/go-api/trace"
 )
 
@@ -80,48 +79,26 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 		return -1, "", err
 	}
 }
-
-func getMysql(ctx context.Context) ([]string, error) {
-
-	db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	// 복수 Row를 갖는 SQL 쿼리
-	var id int
-	var subject string
-	rows, err := db.QueryContext(ctx, "select id, subject from tbl_faq limit 10")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close() //반드시 닫는다 (지연하여 닫기)
-
-	result := make([]string, 0)
-
-	for rows.Next() {
-		err := rows.Scan(&id, &subject)
-		if err != nil {
-			return result, err
-		}
-		fmt.Println(id, subject)
-		result = append(result, fmt.Sprintln(id, subject, "<br>"))
-	}
-	return result, nil
-}
-
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
+	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo2:3306)/doremimaker", " dataSourceName ")
 	flag.Parse()
 	port := *portPtr
 	udpPort := *udpPortPtr
+	dataSource := *dataSourcePtr
 
 	config := make(map[string]string)
 	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 	trace.Init(config)
 	defer trace.Shutdown()
+
+	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
+	if err != nil {
+		fmt.Println("Error service whatapsql.Open ", err)
+		return
+	}
+	defer db.Close()
 
 	r := gin.Default()
 	r.Use(whatapgin.Middleware())
@@ -177,30 +154,11 @@ func main() {
 		var buffer bytes.Buffer
 		var query string
 
-		sqlCtx, _ := whatapsql.StartOpen(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-		db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
-		whatapsql.End(sqlCtx, err)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-		defer db.Close()
-
 		// 복수 Row를 갖는 SQL 쿼리
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
-		sqlCtx, _ = whatapsql.Start(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query)
 		rows, err := db.QueryContext(ctx, query)
-		whatapsql.End(sqlCtx, err)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
 		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
 		for rows.Next() {
@@ -216,7 +174,7 @@ func main() {
 
 		// Prepared Statement 생성
 		query = "select id, subject from tbl_faq where id = ? limit ?"
-		stmt, err := db.Prepare(query)
+		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
@@ -230,9 +188,13 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
-		sqlCtx, _ = whatapsql.StartWithParamArray(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params)
 		rows1, err1 := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(sqlCtx, err1)
+		if err1 != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err1.Error(),
+			})
+			return
+		}
 		defer rows1.Close()
 
 		for rows1.Next() {
@@ -246,9 +208,13 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		sqlCtx, _ = whatapsql.StartWithParam(ctx, "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", query, params...)
 		rows2, err2 := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
-		whatapsql.End(sqlCtx, err2)
+		if err2 != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err2.Error(),
+			})
+			return
+		}
 		defer rows2.Close()
 
 		for rows1.Next() {

@@ -24,7 +24,7 @@ const (
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
-	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker", " dataSourceName ")
+	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo:3306)/doremimaker", " dataSourceName ")
 	flag.Parse()
 	port := *portPtr
 	udpPort := *udpPortPtr

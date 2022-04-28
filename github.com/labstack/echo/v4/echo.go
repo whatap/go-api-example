@@ -12,10 +12,13 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/whatap/go-api/httpc"
-	"github.com/whatap/go-api/instrumentation/github.com/gorilla/mux/whatapmux"
+	"github.com/whatap/go-api/instrumentation/github.com/labstack/echo/v4/whatapecho"
 	"github.com/whatap/go-api/method"
+
 	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
 )
@@ -121,41 +124,37 @@ func main() {
 	trace.Init(config)
 	defer trace.Shutdown()
 
-	r := mux.NewRouter()
-	r.Use(whatapmux.Middleware())
-	subs := r.PathPrefix("/subs").Subrouter()
+	e := echo.New()
+	e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
+	e.Pre(whatapecho.Middleware())
+	e.Use(middleware.Recover())
 
-	r.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		fmt.Println("Request -", r)
+	e.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!\n")
+	})
+	e.GET("/index", func(c echo.Context) error {
+		fmt.Println("Request -", c.Request())
 
-		w.Header().Add("Content-Type", "text/html")
-
-		reply := "/index <br/>Test Body"
-
-		_, _ = w.Write(([]byte)(reply))
+		ctx := c.Request().Context()
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		getUser(ctx)
-		fmt.Println("Response -", r.Response)
-
+		fmt.Println("Response -", c.Response())
+		return c.String(http.StatusOK, "/index <br/>Test Body")
 	})
 
-	r.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		w.Header().Add("Content-Type", "text/html")
-
-		fmt.Println("Request -", r)
-		reply := "/main <br/>Test Body"
-		_, _ = w.Write(([]byte)(reply))
+	e.GET("/main", func(c echo.Context) error {
+		fmt.Println("Request -", c.Request())
+		ctx := c.Request().Context()
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
-		fmt.Println("Response -", r.Response)
+		fmt.Println("Response -", c.Response())
+		return c.String(http.StatusOK, "/main <br/>Test Body")
 	})
 
-	r.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		w.Header().Add("Content-Type", "text/html")
-		fmt.Println("Request -", r)
+	e.GET("/httpc", func(c echo.Context) error {
+		ctx := c.Request().Context()
+		fmt.Println("Request -", c.Request())
+
 		callUrl := "http://localhost:8081/index"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
@@ -167,30 +166,13 @@ func main() {
 			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
 		}
 
-		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
-		fmt.Println("Response -", r.Response)
+		fmt.Println("Response -", c.Response())
+		return c.String(http.StatusOK, string(buffer.Bytes()))
 	})
 
-	r.HandleFunc("/wrapHandleFunc", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/html")
-		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc")
-		_, _ = w.Write(buffer.Bytes())
-		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
-	})
-
-	r.HandleFunc("/wrapHandleFunc1", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/html")
-		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc1")
-		_, _ = w.Write(buffer.Bytes())
-		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
-	})
-
-	r.HandleFunc("/sql/select", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		w.Header().Add("Content-Type", "text/html")
+	e.GET("/sql/select", func(c echo.Context) error {
+		ctx := c.Request().Context()
 		var buffer bytes.Buffer
 		var query string
 
@@ -198,7 +180,7 @@ func main() {
 		db, err := sql.Open("mysql", "doremimaker:doremimaker@tcp(192.168.56.101:3306)/doremimaker")
 		whatapsql.End(sqlCtx, err)
 		if err != nil {
-			return
+			return fmt.Errorf("sql.Open error:%s", err.Error())
 		}
 		defer db.Close()
 
@@ -210,14 +192,14 @@ func main() {
 		rows, err := db.QueryContext(ctx, query)
 		whatapsql.End(sqlCtx, err)
 		if err != nil {
-			return
+			return fmt.Errorf("db.QueryContext error:%s", err.Error())
 		}
 		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
 			if err != nil {
-				return
+				return fmt.Errorf("rows.Scan error:%s", err.Error())
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
@@ -226,7 +208,7 @@ func main() {
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			return
+			return fmt.Errorf("db.Prepare error:%s", err.Error())
 		}
 		defer stmt.Close()
 
@@ -243,7 +225,7 @@ func main() {
 		for rows1.Next() {
 			err := rows1.Scan(&id, &subject)
 			if err != nil {
-				return
+				return fmt.Errorf("rows1.Scan error:%s", err.Error())
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
@@ -254,51 +236,25 @@ func main() {
 		defer rows2.Close()
 
 		for rows1.Next() {
-			err := rows1.Scan(&id, &subject)
+			err := rows2.Scan(&id, &subject)
 			if err != nil {
-				return
+				return fmt.Errorf("rows2.Scan error:%s", err.Error())
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		_, _ = w.Write(buffer.Bytes())
+		return c.String(http.StatusOK, string(buffer.Bytes()))
 
 	})
 
-	r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Request -", r)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Add("Content-Type", "text/html")
+	e.GET("/panic", func(c echo.Context) error {
+		fmt.Println("Request -", c.Request())
 		panic(fmt.Errorf("custom panic"))
+
+		defer fmt.Println("Response -", c.Response())
+		return c.String(http.StatusOK, "Hello, World!\n")
 	})
 
-	subs.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		fmt.Println("Request -", r)
-
-		w.Header().Add("Content-Type", "text/html")
-
-		reply := "/subs/index <br/>Test Body"
-
-		_, _ = w.Write(([]byte)(reply))
-		trace.Step(ctx, "Text Message", "Message", 3, 3)
-
-		getUser(ctx)
-		fmt.Println("Response -", r.Response)
-
-	})
-
-	subs.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		w.Header().Add("Content-Type", "text/html")
-
-		fmt.Println("Request -", r)
-		reply := "/subs/main <br/>Test Body"
-		_, _ = w.Write(([]byte)(reply))
-		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
-		fmt.Println("Response -", r.Response)
-	})
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
-
-	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+	e.Start(fmt.Sprintf(":%d", port))
 }

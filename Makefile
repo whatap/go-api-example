@@ -1,9 +1,12 @@
 
 
-all: mod_download http database_sql grpc gin gorilla echo 
+all: mod_tidy mod_download http database_sql grpc gin gorilla echo 
 
 mod_download:
 	go mod download -x
+
+mod_tidy:
+	go mod tidy
 
 database_sql:
 	#echo "database/sql"
@@ -28,6 +31,7 @@ gorilla:
 echo:
 	#echo "labstack/echo"
 	go build -o github.com/labstack/echo/ github.com/labstack/echo/echo.go
+	go build -o github.com/labstack/echo/v4/ github.com/labstack/echo/v4/echo.go
 
 http:
 	#echo "net/http"
@@ -43,6 +47,7 @@ clean:
 	rm -rf github.com/gin-gonic/gin/gin
 	rm -rf github.com/gorilla/mux/mux
 	rm -rf github.com/labstack/echo/echo
+	rm -rf github.com/labstack/echo/v4/echo
 	rm -rf net/http/client/client
 	rm -rf net/http/server/server
 

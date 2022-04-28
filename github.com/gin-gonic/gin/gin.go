@@ -267,6 +267,13 @@ func main() {
 		})
 	})
 
+	r.GET("/panic", func(c *gin.Context) {
+		panic(fmt.Errorf("custom panic"))
+		c.JSON(http.StatusOK, gin.H{
+			"message": "/main <br/>Test Body",
+		})
+	})
+
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 	r.Run(fmt.Sprintf(":%d", port))
 

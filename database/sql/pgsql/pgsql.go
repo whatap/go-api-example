@@ -42,38 +42,21 @@ func main() {
 	}
 	defer serviceDB.Close()
 
-	http.HandleFunc("/index", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
+		buffer.WriteString("Index <br/><hr/>")
 
-		ctx := r.Context()
 		fmt.Println("Request -", r)
-		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
-		if err != nil {
-			fmt.Println("Error whatapsql.Open ", err)
-			return
-		}
-		defer db.Close()
 
-		var id int
-		var name string
-		query := "select id, name from bbs limit 10"
-		if rows, err := db.QueryContext(ctx, query); err == nil {
-			defer rows.Close()
-			for rows.Next() {
-				err := rows.Scan(&id, &name)
-				if err != nil {
-					break
-				}
-				fmt.Println(id, name)
-				buffer.WriteString(fmt.Sprintln(id, name, "<br>"))
-			}
-		} else {
-			fmt.Println("Error db.QueryContext ", err)
-			return
-		}
-
+		buffer.WriteString("<a href='/query'>/query</a><br>")
+		buffer.WriteString("<a href='/queryRow'>/queryRow</a><br>")
+		buffer.WriteString("<a href='/prepare'>/prepare</a><br>")
+		buffer.WriteString("<a href='/named'>/named</a><br>")
+		buffer.WriteString("<a href='/exec'>/exec</a><br>")
+		buffer.WriteString("<a href='/tx'>/tx</a><br>")
+		buffer.WriteString("<a href='/service/index'>/service/index</a><br>")
+		buffer.WriteString("<a href='/notx/select'>/notx/index</a><br>")
 		_, _ = w.Write(buffer.Bytes())
 
 		fmt.Println("Response -", r.Response)
@@ -83,10 +66,11 @@ func main() {
 	http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open ", err)
@@ -139,10 +123,11 @@ func main() {
 	http.HandleFunc("/queryRow", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open ", err)
@@ -179,10 +164,11 @@ func main() {
 	http.HandleFunc("/prepare", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open")
@@ -311,10 +297,11 @@ func main() {
 	http.HandleFunc("/named", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open")
@@ -360,13 +347,14 @@ func main() {
 	http.HandleFunc("/exec", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		if _, traceCtx := trace.GetTraceContext(ctx); traceCtx != nil {
 			fmt.Println("Txid=", traceCtx.Txid)
 		}
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open")
@@ -401,9 +389,10 @@ func main() {
 	http.HandleFunc("/tx", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
+
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
@@ -485,10 +474,10 @@ func main() {
 	http.HandleFunc("/service/index", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString("/index <br/>Test Body<hr/>")
 
 		ctx := r.Context()
 		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
 		var id int
 		var subject string
@@ -514,6 +503,39 @@ func main() {
 
 		fmt.Println("Response -", r.Response)
 	}))
+
+	http.HandleFunc("/notx/select", func(w http.ResponseWriter, r *http.Request) {
+		var buffer bytes.Buffer
+		w.Header().Add("Content-Type", "text/html")
+
+		ctx := r.Context()
+		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		var id int
+		var subject string
+		query := "select id, subject from tbl_faq limit 10"
+		if rows, err := serviceDB.QueryContext(ctx, query); err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				err := rows.Scan(&id, &subject)
+				if err != nil {
+					break
+				}
+				fmt.Println(id, subject)
+				buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
+			}
+		} else {
+			fmt.Println("Error db.QueryContext ", err)
+			return
+		}
+
+		buffer.WriteString("DB Statas <hr/>")
+		buffer.WriteString(fmt.Sprintln(serviceDB.Stats()))
+		_, _ = w.Write(buffer.Bytes())
+
+		fmt.Println("Response -", r.Response)
+	})
 
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 

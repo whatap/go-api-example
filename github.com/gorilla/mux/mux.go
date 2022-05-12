@@ -102,14 +102,33 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(whatapmux.Middleware())
 	subs := r.PathPrefix("/subs").Subrouter()
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var buffer bytes.Buffer
+		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 
+		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("<a href='/index'>/index</a><br>")
+		buffer.WriteString("<a href='/main'>/main</a><br>")
+		buffer.WriteString("<a href='/httpc'>/httpc</a><br>")
+		buffer.WriteString("<a href='/wrapHandleFunc'>/wrapHandleFunc</a><br>")
+		buffer.WriteString("<a href='/wrapHandleFunc1'>/wrapHandleFunc1</a><br>")
+		buffer.WriteString("<a href='/sql/select'>/sql/select</a><br>")
+		buffer.WriteString("<a href='/panic'>/panic</a><br>")
+		buffer.WriteString("<hr/>")
+		buffer.WriteString("<a href='/subs/index'>/subs/index</a><br>")
+		buffer.WriteString("<a href='/subs/main'>/subs/main</a><br>")
+
+		_, _ = w.Write(buffer.Bytes())
+	})
 	r.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		fmt.Println("Request -", r)
 
 		w.Header().Add("Content-Type", "text/html")
 
-		reply := "/index <br/>Test Body"
+		reply := r.RequestURI + " <br/><hr/>"
 
 		_, _ = w.Write(([]byte)(reply))
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
@@ -124,7 +143,7 @@ func main() {
 		w.Header().Add("Content-Type", "text/html")
 
 		fmt.Println("Request -", r)
-		reply := "/main <br/>Test Body"
+		reply := r.RequestURI + " <br/>"
 		_, _ = w.Write(([]byte)(reply))
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)
@@ -137,6 +156,7 @@ func main() {
 		callUrl := "http://localhost:8081/index"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -153,6 +173,7 @@ func main() {
 	r.HandleFunc("/wrapHandleFunc", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 		buffer.WriteString("wrapHandleFunc")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
@@ -161,6 +182,7 @@ func main() {
 	r.HandleFunc("/wrapHandleFunc1", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 		buffer.WriteString("wrapHandleFunc1")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
@@ -170,6 +192,8 @@ func main() {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		var query string
 
 		// 복수 Row를 갖는 SQL 쿼리
@@ -242,7 +266,7 @@ func main() {
 
 		w.Header().Add("Content-Type", "text/html")
 
-		reply := "/subs/index <br/>Test Body"
+		reply := r.RequestURI + "<br/><hr/>"
 
 		_, _ = w.Write(([]byte)(reply))
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
@@ -257,7 +281,7 @@ func main() {
 		w.Header().Add("Content-Type", "text/html")
 
 		fmt.Println("Request -", r)
-		reply := "/subs/main <br/>Test Body"
+		reply := r.RequestURI + "<br/><hr/>"
 		_, _ = w.Write(([]byte)(reply))
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)

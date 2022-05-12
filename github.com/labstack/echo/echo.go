@@ -107,7 +107,16 @@ func main() {
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!\n")
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("<a href='/index'>/index</a><br>")
+		buffer.WriteString("<a href='/main'>/main</a><br>")
+		buffer.WriteString("<a href='/httpc'>/httpc</a><br>")
+		buffer.WriteString("<a href='/sql/select'>/sql/select</a><br>")
+		buffer.WriteString("<a href='/panic'>/panic</a><br>")
+
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 	e.GET("/index", func(c echo.Context) error {
 		fmt.Println("Request -", c.Request())
@@ -117,7 +126,7 @@ func main() {
 
 		getUser(ctx)
 		fmt.Println("Response -", c.Response())
-		return c.String(http.StatusOK, "/index <br/>Test Body")
+		return c.String(http.StatusOK, c.Request().RequestURI+"<br/><hr/>")
 	})
 
 	e.GET("/main", func(c echo.Context) error {
@@ -125,16 +134,18 @@ func main() {
 		ctx := c.Request().Context()
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", c.Response())
-		return c.String(http.StatusOK, "/main <br/>Test Body")
+		return c.String(http.StatusOK, c.Request().RequestURI+"<br/><hr/>")
 	})
 
 	e.GET("/httpc", func(c echo.Context) error {
 		ctx := c.Request().Context()
 		fmt.Println("Request -", c.Request())
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
 
 		callUrl := "http://localhost:8081/index"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
-		var buffer bytes.Buffer
+
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -145,12 +156,14 @@ func main() {
 
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", c.Response())
-		return c.String(http.StatusOK, string(buffer.Bytes()))
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 
 	e.GET("/sql/select", func(c echo.Context) error {
 		ctx := c.Request().Context()
 		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+
 		var query string
 
 		// 복수 Row를 갖는 SQL 쿼리
@@ -206,7 +219,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		return c.String(http.StatusOK, string(buffer.Bytes()))
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 
 	})
 	e.GET("/panic", func(c echo.Context) error {

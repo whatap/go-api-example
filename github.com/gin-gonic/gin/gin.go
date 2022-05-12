@@ -103,9 +103,17 @@ func main() {
 	r := gin.Default()
 	r.Use(whatapgin.Middleware())
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "ok",
-		})
+		var buffer bytes.Buffer
+		fmt.Println("Request -", c.Request)
+		buffer.WriteString(c.Request.RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("<a href='/index'>/index</a><br>")
+		buffer.WriteString("<a href='/main'>/main</a><br>")
+		buffer.WriteString("<a href='/httpc'>/httpc</a><br>")
+		buffer.WriteString("<a href='/sql/select'>/sql/select</a><br>")
+		buffer.WriteString("<a href='/panic'>/panic</a><br>")
+
+		c.Data(http.StatusOK, "text/html; charset=utf8", buffer.Bytes())
 	})
 	r.GET("/index", func(c *gin.Context) {
 		fmt.Println("Request -", c.Request)

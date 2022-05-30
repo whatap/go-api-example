@@ -5,8 +5,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,6 +84,20 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 	}
 }
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+type HTMLData struct {
+	Title   string
+	Content string
+	//HTMLContent template.HTML
+}
+
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
@@ -101,22 +119,21 @@ func main() {
 	}
 	defer db.Close()
 
+	t := &Template{
+		templates: template.Must(template.ParseGlob("templates/github.com/labstack/*.html")),
+	}
+
 	e := echo.New()
+	e.Renderer = t
 	e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
 	e.Pre(whatapecho.Middleware())
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
-		var buffer bytes.Buffer
-		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
-
-		buffer.WriteString("<a href='/index'>/index</a><br>")
-		buffer.WriteString("<a href='/main'>/main</a><br>")
-		buffer.WriteString("<a href='/httpc'>/httpc</a><br>")
-		buffer.WriteString("<a href='/sql/select'>/sql/select</a><br>")
-		buffer.WriteString("<a href='/panic'>/panic</a><br>")
-
-		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+		data := &HTMLData{}
+		data.Title = "echo server"
+		data.Content = c.Request().RequestURI
+		return c.Render(http.StatusOK, "index.html", data)
 	})
 	e.GET("/index", func(c echo.Context) error {
 		fmt.Println("Request -", c.Request())
@@ -144,6 +161,27 @@ func main() {
 		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
 
 		callUrl := "http://localhost:8081/index"
+		httpcCtx, _ := httpc.Start(ctx, callUrl)
+
+		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
+			httpc.End(httpcCtx, statusCode, "", nil)
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
+		} else {
+			httpc.End(httpcCtx, -1, "", err)
+			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
+		}
+
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
+		fmt.Println("Response -", c.Response())
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+	})
+	e.GET("/httpc/unknown", func(c echo.Context) error {
+		ctx := c.Request().Context()
+		fmt.Println("Request -", c.Request())
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
@@ -225,6 +263,125 @@ func main() {
 	e.GET("/panic", func(c echo.Context) error {
 		panic(fmt.Errorf("custom panic"))
 		return c.String(http.StatusOK, "Hello, World!\n")
+	})
+
+	e.GET("/input", func(c echo.Context) error {
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><body>")
+		form := `<form action="/saveUrlencoded" method="post" >
+    Name : <input type="text" name="name" value="">
+    Value : <input type="text" name="value" value="">
+    <input type="submit" value="Action" />
+</form></body></html>`
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+		buffer.WriteString(form)
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+
+	})
+
+	e.POST("/saveUrlencoded", func(c echo.Context) error {
+		fmt.Println("Request, ", c.Request())
+
+		if c.Request() != nil {
+			name := c.Request().FormValue("name")
+			val := c.Request().FormValue("value")
+			fmt.Println("c.Request() FormValue ", name, ", ", val)
+
+			params := c.Request().Form
+			for k, v := range params {
+				fmt.Println("c.Request().Form k=", k, ", v=", v, ",")
+			}
+
+			name1 := c.Request().PostFormValue("name")
+			val1 := c.Request().PostFormValue("value")
+			fmt.Println("c.Request() PostFormValue ", name1, ", ", val1)
+
+			params1 := c.Request().PostForm
+			for k, v := range params1 {
+				fmt.Println("c.Request().PostForm k=", k, ", v=", v, ",")
+			}
+		}
+
+		name := c.FormValue("name")
+		val := c.FormValue("value")
+		fmt.Println("params 11 saveUrlencoded ParseForm ", name, ", ", val)
+
+		if params, err := c.FormParams(); err == nil {
+			for k, v := range params {
+				fmt.Println("c.FormParams() k=", k, ", v=", v, ",")
+			}
+		}
+
+		if err := c.Request().ParseForm(); err != nil {
+			fmt.Println("saveUrlencoded ParseForm error ", err)
+		}
+
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+
+	})
+	e.GET("/inputFile", func(c echo.Context) error {
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><body>")
+		form := `<form action="/upload" method="post" enctype="multipart/form-data">
+    Name : <input type="text" name="name" value="">
+    Value : <input type="text" name="email" value="">
+    File : <input type="file" name="file" value="">
+    <input type="submit" value="Action" />
+</form></body></html>`
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+		buffer.WriteString(form)
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+
+	})
+	e.POST("/upload", func(c echo.Context) error {
+		fmt.Println("Request, ", c.Request())
+		var buffer bytes.Buffer
+
+		// Read form fields
+		name := c.FormValue("name")
+		email := c.FormValue("email")
+		fmt.Println("fields name=", name, ",email=", email)
+
+		buffer.WriteString("name=" + name + "<br/>")
+		buffer.WriteString("email=" + email + "<br/>")
+
+		//-----------
+		// Read file
+		//-----------
+
+		// Source
+		file, err := c.FormFile("file")
+		if err != nil {
+			fmt.Println("c.FromFile err=", err)
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			fmt.Println("file.Open() err=", err)
+			return err
+		}
+		defer src.Close()
+
+		// Destination
+		dst, err := os.Create("./" + file.Filename)
+		if err != nil {
+			fmt.Println("os.Create ", file.Filename, ", err=", err)
+			return err
+		}
+		defer dst.Close()
+
+		// Copy
+		if _, err = io.Copy(dst, src); err != nil {
+			fmt.Println("io.Copy src to dest err", err)
+			return err
+		}
+		fmt.Println("upload ok ", file.Filename, ", size=", strconv.FormatInt(file.Size, 10))
+		buffer.WriteString("upload ok " + file.Filename + ", size=" + strconv.FormatInt(file.Size, 10))
+
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+
 	})
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 	e.Start(fmt.Sprintf(":%d", port))

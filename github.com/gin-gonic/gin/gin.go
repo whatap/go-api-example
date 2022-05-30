@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -102,18 +103,16 @@ func main() {
 
 	r := gin.Default()
 	r.Use(whatapgin.Middleware())
+
+	r.LoadHTMLGlob("templates/github.com/gin-gonic/*")
+
 	r.GET("/", func(c *gin.Context) {
-		var buffer bytes.Buffer
 		fmt.Println("Request -", c.Request)
-		buffer.WriteString(c.Request.RequestURI + "<br/><hr/>")
-
-		buffer.WriteString("<a href='/index'>/index</a><br>")
-		buffer.WriteString("<a href='/main'>/main</a><br>")
-		buffer.WriteString("<a href='/httpc'>/httpc</a><br>")
-		buffer.WriteString("<a href='/sql/select'>/sql/select</a><br>")
-		buffer.WriteString("<a href='/panic'>/panic</a><br>")
-
-		c.Data(http.StatusOK, "text/html; charset=utf8", buffer.Bytes())
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"Title":   "gin server",
+			"Content": c.Request.RequestURI,
+		},
+		)
 	})
 	r.GET("/index", func(c *gin.Context) {
 		fmt.Println("Request -", c.Request)
@@ -141,6 +140,27 @@ func main() {
 		fmt.Println("Request -", c.Request)
 
 		callUrl := "http://localhost:8081/index"
+		httpcCtx, _ := httpc.Start(ctx, callUrl)
+		var buffer bytes.Buffer
+		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
+			httpc.End(httpcCtx, statusCode, "", nil)
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
+		} else {
+			httpc.End(httpcCtx, -1, "", err)
+			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
+		}
+
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
+		c.JSON(http.StatusOK, gin.H{
+			"message": string(buffer.Bytes()),
+		})
+	})
+
+	r.GET("/httpc/unknown", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		fmt.Println("Request -", c.Request)
+
+		callUrl := "http://localhost:8081/unknown"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
@@ -246,6 +266,99 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "/main <br/>Test Body",
 		})
+	})
+
+	r.GET("/input", func(c *gin.Context) {
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><body>")
+		form := `<form action="/saveUrlencoded" method="post" >
+    Name : <input type="text" name="name" value="">
+    Value : <input type="text" name="value" value="">
+    <input type="submit" value="Action" />
+</form></body></html>`
+		buffer.WriteString(c.Request.RequestURI + "<br/><hr/>")
+		buffer.WriteString(form)
+		c.Data(http.StatusOK, "text/html;charset=UTF-8", buffer.Bytes())
+
+	})
+
+	r.POST("/saveUrlencoded", func(c *gin.Context) {
+		fmt.Println("Request, ", c.Request)
+
+		if c.Request != nil {
+			name := c.Request.FormValue("name")
+			val := c.Request.FormValue("value")
+			fmt.Println("c.Request() FormValue ", name, ", ", val)
+
+			params := c.Request.Form
+			for k, v := range params {
+				fmt.Println("c.Request().Form k=", k, ", v=", v, ",")
+			}
+
+			name1 := c.Request.PostFormValue("name")
+			val1 := c.Request.PostFormValue("value")
+			fmt.Println("c.Request() PostFormValue ", name1, ", ", val1)
+
+			params1 := c.Request.PostForm
+			for k, v := range params1 {
+				fmt.Println("c.Request().PostForm k=", k, ", v=", v, ",")
+			}
+		}
+
+		name := c.PostForm("name")
+		val := c.PostForm("value")
+		fmt.Println("params 11 saveUrlencoded ParseForm ", name, ", ", val)
+
+		if err := c.Request.ParseForm(); err != nil {
+			fmt.Println("saveUrlencoded ParseForm error ", err)
+		}
+
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request.RequestURI + "<br/><hr/>")
+		c.String(http.StatusOK, string(buffer.Bytes()))
+
+	})
+	r.GET("/inputFile", func(c *gin.Context) {
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><body>")
+		form := `<form action="/upload" method="post" enctype="multipart/form-data">
+    Name : <input type="text" name="name" value="">
+    Value : <input type="text" name="email" value="">
+    File : <input type="file" name="file" value="">
+    <input type="submit" value="Action" />
+</form></body></html>`
+		buffer.WriteString(c.Request.RequestURI + "<br/><hr/>")
+		buffer.WriteString(form)
+		c.Data(http.StatusOK, "text/html;charset=UTF-8", buffer.Bytes())
+	})
+	r.POST("/upload", func(c *gin.Context) {
+		fmt.Println("Request, ", c.Request)
+		var buffer bytes.Buffer
+
+		// Read form fields
+		name := c.PostForm("name")
+		email := c.PostForm("email")
+		fmt.Println("fields name=", name, ",email=", email)
+
+		buffer.WriteString("name=" + name + "<br/>")
+		buffer.WriteString("email=" + email + "<br/>")
+
+		//-----------
+		// Read file
+		//-----------
+		file, _ := c.FormFile("file")
+		fmt.Println(file.Filename + " uploaded")
+
+		// 파일 저장
+
+		// 방법 1.
+		// 기본 제공 함수로 파일 저장
+		c.SaveUploadedFile(file, file.Filename)
+		fmt.Println("upload ok ", file.Filename, ", size=", strconv.FormatInt(file.Size, 10))
+		buffer.WriteString("upload ok " + file.Filename + ", size=" + strconv.FormatInt(file.Size, 10))
+
+		c.String(http.StatusOK, string(buffer.Bytes()))
+
 	})
 
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)

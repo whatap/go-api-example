@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -20,6 +21,12 @@ const (
 	ORACLE_DRIVER_NAME = "godror"
 	PGSQL_DRIVER_NAME  = "postgres"
 )
+
+type HTMLData struct {
+	Title   string
+	Content string
+	//HTMLContent template.HTML
+}
 
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
@@ -42,36 +49,20 @@ func main() {
 	}
 	defer serviceDB.Close()
 
-	http.HandleFunc("/test", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Request /test -", r)
-		var buffer bytes.Buffer
-		buffer.WriteString(r.RequestURI + "<br/><hr/>")
-		w.Header().Add("Content-Type", "text/html")
-		n, err := w.Write(buffer.Bytes())
-		fmt.Println("Response /test - ", n, ", err=", err)
-
-	}))
-
 	http.HandleFunc("/", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
-		var buffer bytes.Buffer
-		w.Header().Add("Content-Type", "text/html")
-		buffer.WriteString(r.RequestURI + "<br/><hr/>")
-
 		fmt.Println("Request -", r)
 
-		buffer.WriteString("<a href='/query'>/query</a><br>")
-		buffer.WriteString("<a href='/queryRow'>/queryRow</a><br>")
-		buffer.WriteString("<a href='/prepare'>/prepare</a><br>")
-		buffer.WriteString("<a href='/named'>/named</a><br>")
-		buffer.WriteString("<a href='/exec'>/exec</a><br>")
-		buffer.WriteString("<a href='/tx'>/tx</a><br>")
-		buffer.WriteString("<a href='/service/index'>/service/index</a><br>")
-		buffer.WriteString("<a href='/notx/select'>/notx/index</a><br>")
-		buffer.WriteString("<a href='/notx/error'>/notx/error</a><br>")
-		_, _ = w.Write(buffer.Bytes())
+		tp, err := template.ParseFiles("templates/database/sql/index.html")
+		if err != nil {
+			fmt.Println("Template not loaded, ", err)
+			return
+		}
+		data := &HTMLData{}
+		data.Title = "database/sql server"
+		data.Content = r.RequestURI
+		tp.Execute(w, data)
 
 		fmt.Println("Response -", r.Response)
-
 	}))
 
 	http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
@@ -225,6 +216,7 @@ func main() {
 				}
 			} else {
 				whatapsql.End(sqlCtx, err1)
+				buffer.WriteString(fmt.Sprintln("Error db.Prepare stmt.Query ", err1, "<br>"))
 				fmt.Println("Error stmt.Query ", err1)
 			}
 
@@ -242,10 +234,12 @@ func main() {
 				}
 			} else {
 				whatapsql.End(sqlCtx, err1)
+				buffer.WriteString(fmt.Sprintln("Error db.Prepare stmt.QueryContext ", err1, "<br>"))
 				fmt.Println("Error stmt.QueryContext ", err1)
 			}
 		} else {
 			fmt.Println("Error db.Prepare ", err)
+			buffer.WriteString(fmt.Sprintln("Error db.Prepare ", err, "<br>"))
 		}
 
 		if stmt, err := db.PrepareContext(ctx, query); err == nil {
@@ -264,6 +258,7 @@ func main() {
 				}
 			} else {
 				whatapsql.End(sqlCtx, err1)
+				buffer.WriteString(fmt.Sprintln("Error db.PrepareContext stmt.QueryContex ", err1, "<br>"))
 				fmt.Println("Error stmt.QueryContext ", err1)
 			}
 
@@ -282,11 +277,13 @@ func main() {
 				}
 			} else {
 				whatapsql.End(sqlCtx, err1)
+				buffer.WriteString(fmt.Sprintln("Error db.PrepareContext stmt.QueryContex ", err1, "<br>"))
 				fmt.Println("Error stmt.QueryContext ", err1)
 			}
 
 		} else {
 			fmt.Println("Error db.PrepareContext ", err)
+			buffer.WriteString(fmt.Sprintln("Error db.PrepareContext ", err, "<br>"))
 		}
 
 		query = "select id, subject from tbl_faq where id in (?,?) limit 1"
@@ -300,6 +297,7 @@ func main() {
 				buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 			} else {
 				fmt.Println("Error row.Scan ", err1)
+				buffer.WriteString(fmt.Sprintln("Error  stmt.QueryRow row.Scan ", err1, "<br>"))
 			}
 
 			sqlCtx, _ = whatapsql.StartWithParam(ctx, dataSource, query, params...)
@@ -310,9 +308,11 @@ func main() {
 				buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 			} else {
 				fmt.Println("Error row.Scan ", err1)
+				buffer.WriteString(fmt.Sprintln("Error  stmt.QueryRowContext row.Scan", err1, "<br>"))
 			}
 		} else {
 			fmt.Println("Error db.Prepare ", err)
+			buffer.WriteString(fmt.Sprintln("Error db.Prepare row.Scan ", err, "<br>"))
 		}
 
 		query = "update tbl_faq set subject='aaa' where id in (?,?) limit 1"
@@ -323,6 +323,7 @@ func main() {
 				fmt.Println("Result ", res)
 			} else {
 				whatapsql.End(sqlCtx, err1)
+				buffer.WriteString(fmt.Sprintln("Error stmt.Exec ", err1, "<br>"))
 				fmt.Println("Error stmt.Exec ", err1)
 			}
 
@@ -332,10 +333,12 @@ func main() {
 				fmt.Println("Result ", res)
 			} else {
 				whatapsql.End(sqlCtx, err1)
-				fmt.Println("Error stmt.Exec ", err1)
+				buffer.WriteString(fmt.Sprintln("Error stmt.ExecContext ", err1, "<br>"))
+				fmt.Println("Error stmt.ExecContext ", err1)
 			}
 		} else {
 			fmt.Println("Error db.Prepare ", err)
+			buffer.WriteString(fmt.Sprintln("Error db.Prepare Exec ", err, "<br>"))
 		}
 		_, _ = w.Write(buffer.Bytes())
 
@@ -383,8 +386,8 @@ func main() {
 
 			} else {
 				whatapsql.End(sqlCtx, err1)
-				fmt.Println("Error db.QueryContext", err)
-				http.Error(w, fmt.Sprintln("Error db.QueryContext", err), http.StatusInternalServerError)
+				fmt.Println("Error db.QueryContext", err1)
+				http.Error(w, fmt.Sprintln("Error db.QueryContext", err1), http.StatusInternalServerError)
 			}
 
 		} else {

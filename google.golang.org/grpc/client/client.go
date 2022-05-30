@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -84,6 +85,12 @@ func parseParams(r *http.Request) []*pb.Param {
 		}
 	}
 	return rt
+}
+
+type HTMLData struct {
+	Title   string
+	Content string
+	//HTMLContent template.HTML
 }
 
 func main() {
@@ -279,7 +286,7 @@ func main() {
 
 	}))
 
-	mux.Handle("/", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/index", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		log.Println("Request ", r.RequestURI)
 
@@ -315,6 +322,18 @@ func main() {
 
 		_, _ = w.Write(buffer.Bytes())
 
+	}))
+
+	mux.Handle("/", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tp, err := template.ParseFiles("templates/google.golang.org/grpc/client/index.html")
+		if err != nil {
+			fmt.Println("Template not loaded, ", err)
+			return
+		}
+		data := &HTMLData{}
+		data.Title = "grpc client"
+		data.Content = r.RequestURI
+		tp.Execute(w, data)
 	}))
 
 	log.Println("Start :", *port, ", Grpc port:", *grpcPort, ", Whatap Udp port:", *udpPort)

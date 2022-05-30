@@ -5,8 +5,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -27,6 +30,9 @@ func getUser(ctx context.Context) {
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
+	var f WhatapHttpGet
+	f = http.Get
+	WrapResponse(callUrl, f)
 	if resp, err := http.Get(callUrl); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
@@ -42,6 +48,16 @@ func httpGet(callUrl string) (int, string, error) {
 		fmt.Println(err)
 		return -1, "", err
 	}
+}
+
+type WhatapHttpGet func(string) (resp *http.Response, err error)
+
+func WrapClientDo(client *http.Client, req *http.Request) (*http.Response, error) {
+	return client.Do(req)
+}
+
+func WrapResponse(url string, f WhatapHttpGet) (*http.Response, error) {
+	return f(url)
 }
 
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
@@ -77,6 +93,47 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 	}
 }
 
+type AccessLogRoundTrip struct {
+	transport http.RoundTripper
+}
+
+func (this *AccessLogRoundTrip) RoundTrip(req *http.Request) (res *http.Response, err error) {
+	fmt.Println("AccessLogRoundTrip Start ")
+	if res, err = this.transport.RoundTrip(req); err == nil {
+		if res != nil {
+			fmt.Println("AccessLogRoundTrip End res is nil ")
+		} else {
+			fmt.Println("AccessLogRoundTrip End res ", res)
+		}
+	} else {
+		fmt.Println("AccessLogRoundTrip End error ", err)
+	}
+	return res, err
+}
+
+func NewAccessLogRoundTrip(t http.RoundTripper) http.RoundTripper {
+	return &AccessLogRoundTrip{t}
+}
+
+type HTMLData struct {
+	Title   string
+	Content string
+	//HTMLContent template.HTML
+}
+
+type HTMLLink struct {
+	Href   string
+	Name   string
+	Alt    string
+	Target string
+}
+type IndexHTMLData struct {
+	HTMLData
+	ALink []HTMLLink
+}
+
+func unescaped(str string) template.HTML { return template.HTML(str) }
+
 func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
@@ -98,6 +155,27 @@ func main() {
 	trace.Init(config)
 	defer trace.Shutdown()
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+		fmt.Println("Request -", r)
+
+		tp, err := template.ParseFiles("templates/net/http/server/index.html")
+		if err != nil {
+			fmt.Println("Template not loaded, ", err)
+			return
+		}
+		data := &HTMLData{}
+		data.Title = "net/http server"
+		data.Content = r.RequestURI
+		tp.Execute(w, data)
+
+		trace.Step(ctx, "Text Message", "Message", 3, 3)
+
+		getUser(ctx)
+		fmt.Println("Response -", r.Response)
+	})
+
 	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
@@ -112,10 +190,13 @@ func main() {
 		fmt.Println("Request -", r)
 
 		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
-		reply := "/index <br/>Test Body"
+		buffer.WriteString("</body></html>")
 
-		_, _ = w.Write(([]byte)(reply))
+		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
 		getUser(ctx)
@@ -127,10 +208,13 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 		w.Header().Add("Content-Type", "text/html")
-
 		fmt.Println("Request -", r)
-		reply := "/main <br/>Test Body"
-		_, _ = w.Write(([]byte)(reply))
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)
 	})
@@ -140,9 +224,13 @@ func main() {
 		defer trace.End(ctx, nil)
 		w.Header().Add("Content-Type", "text/html")
 		fmt.Println("Request -", r)
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		callUrl := "http://localhost:8081/index"
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
-		var buffer bytes.Buffer
+
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -151,6 +239,33 @@ func main() {
 			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
 		}
 
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+
+	http.HandleFunc("/httpc/unknown", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+		w.Header().Add("Content-Type", "text/html")
+		fmt.Println("Request -", r)
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
+		httpcCtx, _ := httpc.Start(ctx, callUrl)
+
+		if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
+			httpc.End(httpcCtx, statusCode, "", nil)
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
+		} else {
+			httpc.End(httpcCtx, -1, "", err)
+			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
+		}
+
+		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", r.Response)
@@ -162,31 +277,259 @@ func main() {
 
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc")
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
 		callUrl := "http://localhost:8081/index"
 
 		client := http.DefaultClient
 		client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
-		resp, err := client.Get(callUrl)
-		if err == nil {
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
 			if data, err := ioutil.ReadAll(resp.Body); err == nil {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
-		defer resp.Body.Close()
 
+		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
 		fmt.Println("Response -", r.Response)
 	})
 
+	http.HandleFunc("/roundTripper/unknown", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
+
+		client := http.DefaultClient
+		client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+
+	http.HandleFunc("/roundTripper/nil", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/index"
+
+		client := http.DefaultClient
+		client.Transport = whataphttp.NewRoundTrip(ctx, nil)
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	}))
+
+	http.HandleFunc("/roundTripper/nil/unknown", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
+
+		client := http.DefaultClient
+		client.Transport = whataphttp.NewRoundTrip(ctx, nil)
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	}))
+
+	http.HandleFunc("/roundTripper/multi", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/index"
+
+		client := http.DefaultClient
+		client.Transport = NewAccessLogRoundTrip(whataphttp.NewRoundTrip(ctx, http.DefaultTransport))
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+	http.HandleFunc("/roundTripper/multi/unknown", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
+
+		client := http.DefaultClient
+		client.Transport = NewAccessLogRoundTrip(whataphttp.NewRoundTrip(ctx, http.DefaultTransport))
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+
+	http.HandleFunc("/roundTripper/multi/nil", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/index"
+
+		client := http.DefaultClient
+		client.Transport = NewAccessLogRoundTrip(whataphttp.NewRoundTrip(ctx, nil))
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	}))
+	http.HandleFunc("/roundTripper/multi/nil/unknown", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/unknown"
+
+		client := http.DefaultClient
+		client.Transport = NewAccessLogRoundTrip(NewAccessLogRoundTrip(whataphttp.NewRoundTrip(ctx, nil)))
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	}))
+
+	http.Handle("/fileTransport", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		tr := &http.Transport{}
+		tr.RegisterProtocol("file", http.NewFileTransport(http.Dir(".")))
+
+		wrapTransport := whataphttp.NewRoundTrip(ctx, tr)
+
+		c := &http.Client{Transport: wrapTransport}
+		if r, err := c.Get("file:///file.txt"); err == nil {
+			fmt.Println("file print")
+			io.Copy(os.Stdout, r.Body)
+		} else {
+			fmt.Println("c.Get error ", err)
+		}
+
+		const badURL = "file:///no-exist.txt"
+		res, err := c.Get(badURL)
+		if err != nil {
+			fmt.Println("badUrl get error", err)
+		}
+		if res != nil {
+			if res.StatusCode != 404 {
+				fmt.Println("for %s, StatusCode = %d, want 404", badURL, res.StatusCode)
+			}
+		}
+	}))
+
 	http.HandleFunc("/wrapHandleFunc", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc")
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
 	}))
@@ -194,7 +537,10 @@ func main() {
 	http.Handle("/wrapHandleFunc1", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
-		buffer.WriteString("wrapHandleFunc1")
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
 	}))
@@ -203,6 +549,9 @@ func main() {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
 		var query string
 
 		// 복수 Row를 갖는 SQL 쿼리
@@ -258,8 +607,13 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
+		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
 
+	}))
+
+	http.Handle("/panic", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic(fmt.Errorf("custom panic"))
 	}))
 
 	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)

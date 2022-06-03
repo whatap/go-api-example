@@ -37,6 +37,9 @@ start(){
     echo $! >> run.pid
     nohup ./app/pgsql -p 8093 -up ${UDP_PORT} > ./logs/pgsql.log &
     echo $! >> run.pid
+
+    nohup ./app/chi -p 8094 -up ${UDP_PORT} > ./logs/chi.log &
+    echo $! >> run.pid
 }
 
 start_stress(){

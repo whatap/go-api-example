@@ -33,6 +33,10 @@ echo:
 	go build -o bin/app/echo github.com/labstack/echo/echo.go
 	go build -o bin/app/echo-v4 github.com/labstack/echo/v4/echo.go
 
+chi:
+	#echo "go-chi/chi"
+	go build -o bin/app/chi github.com/go-chi/chi/chi.go
+
 http:
 	#echo "net/http"
 	go build -o bin/app/http_client net/http/client/client.go

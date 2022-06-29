@@ -1,6 +1,6 @@
 
 
-all: mod_tidy mod_download http database_sql grpc gin gorilla echo 
+all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama
 
 mod_download:
 	go mod download -x
@@ -37,6 +37,19 @@ http:
 	#echo "net/http"
 	go build -o bin/app/http_client net/http/client/client.go
 	go build -o bin/app/http_server net/http/server/server.go
+
+gormv2:
+	go build -o bin/app/gormv2 github.com/go-gorm/gorm/gorm.go
+
+gormv1:
+	go build -o bin/app/gormv1 github.com/jinzhu/gorm/gorm.go
+
+redigo:
+	go build -o bin/app/redigo github.com/gomodule/redigo/redigo.go
+
+sarama:
+	go build -o bin/app/sarama github.com/Shopify/sarama/sarama.go
+
 
 clean:
 	rm -f bin/app/*

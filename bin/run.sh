@@ -37,7 +37,15 @@ start(){
     echo $! >> run.pid
     nohup ./app/pgsql -p 8093 -up ${UDP_PORT} > ./logs/pgsql.log &
     echo $! >> run.pid
-    nohup ./app/chi-p 8094 -up ${UDP_PORT} > ./logs/chi.log &
+    nohup ./app/chi -p 8094 -up ${UDP_PORT} > ./logs/chi.log &
+    echo $! >> run.pid
+    nohup ./app/gormv1 -p 8095 -up ${UDP_PORT} > ./logs/gormv1.log &
+    echo $! >> run.pid
+    nohup ./app/gormv2 -p 8096 -up ${UDP_PORT} > ./logs/gormv2.log &
+    echo $! >> run.pid
+    nohup ./app/redigo -p 8097 -up ${UDP_PORT} > ./logs/redigo.log &
+    echo $! >> run.pid
+    nohup ./app/sarama -p 8098 -up ${UDP_PORT} > ./logs/sarama.log &
     echo $! >> run.pid
 }
 

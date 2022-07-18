@@ -22,8 +22,12 @@ type HTMLData struct {
 func main() {
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
+	dataSourcePtr := flag.String("ds", "phpdemo3:6379", " dataSourceName ")
+	flag.Parse()
+
 	udpPort := *udpPortPtr
 	port := *portPtr
+	dataSource := *dataSourcePtr
 
 	whatapConfig := make(map[string]string)
 	whatapConfig["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -51,7 +55,7 @@ func main() {
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
 		DialContext: func(ctx context.Context) (redis.Conn, error) {
-			return whatapredigo.DialContext(ctx, "tcp", "192.168.200.65:6379")
+			return whatapredigo.DialContext(ctx, "tcp", dataSource)
 		},
 	}
 	defer servicePool.Close()
@@ -83,7 +87,6 @@ func main() {
 		}
 
 		fmt.Println(string(data))
-
 	})
 
 	//Case 2. Dial Used
@@ -91,7 +94,7 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.Dial("tcp", "192.168.200.65:6379")
+		conn, err := whatapredigo.Dial("tcp", dataSource)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -124,7 +127,7 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.DialContext(ctx, "tcp", "192.168.200.65:6379")
+		conn, err := whatapredigo.DialContext(ctx, "tcp", dataSource)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -155,7 +158,8 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.DialURL("redis://192.168.200.65:6379")
+		dUrl := fmt.Sprintf("redis://%s", dataSource)
+		conn, err := whatapredigo.DialURL(dUrl)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -188,7 +192,7 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.DialURLContext(ctx, "redis://192.168.200.65:6379")
+		conn, err := whatapredigo.DialURLContext(ctx, dataSource)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -220,7 +224,7 @@ func main() {
 		defer trace.End(ctx, nil)
 
 		//Dial Timeout Option
-		conn, err := whatapredigo.Dial("tcp", "192.168.200.64:6379", redis.DialConnectTimeout(time.Millisecond*1000), redis.DialReadTimeout(time.Millisecond*1000), redis.DialWriteTimeout(time.Millisecond*1000))
+		conn, err := whatapredigo.Dial("tcp", dataSource, redis.DialConnectTimeout(time.Millisecond*1000), redis.DialReadTimeout(time.Millisecond*1000), redis.DialWriteTimeout(time.Millisecond*1000))
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -253,7 +257,7 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.Dial("tcp", "192.168.200.65:6379")
+		conn, err := whatapredigo.Dial("tcp", dataSource)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)

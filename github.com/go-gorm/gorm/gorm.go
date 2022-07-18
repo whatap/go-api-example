@@ -30,7 +30,9 @@ type HTMLData struct {
 func main() {
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
-	dataSourcePtr := flag.String("ds", "mysql:mysql@tcp(192.168.200.65:3306)/mysqldb", " dataSourceName ")
+	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo2:3306)/doremimaker", " dataSourceName ")
+	flag.Parse()
+
 	udpPort := *udpPortPtr
 	dataSource := *dataSourcePtr
 
@@ -69,6 +71,9 @@ func main() {
 		if err != nil {
 			panic("Db 연결에 실패하였습니다.")
 		}
+
+		db.AutoMigrate(&Product{})
+
 		for i := 0; i < 100; i++ {
 			db.Create(&Product{Code: i, Price: i * 100})
 		}

@@ -19,6 +19,16 @@ type HTMLData struct {
 }
 
 func main() {
+
+	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
+	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
+	dataSourcePtr := flag.String("ds", "phpdemo3:9092", " dataSourceName ")
+	flag.Parse()
+
+	udpPort := *udpPortPtr
+	port := *portPtr
+	dataSource := *dataSourcePtr
+
 	config := sarama.NewConfig()
 	config.Producer.Retry.Max = 5
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -26,17 +36,13 @@ func main() {
 	config.Producer.Return.Errors = true
 	config.Consumer.Return.Errors = true
 
-	brokers := []string{"192.168.200.65:9092"} //config kafka broker IP/Port
+	brokers := []string{dataSource} //config kafka broker IP/Port
 
 	interceptor := whatapsarama.Interceptor{Brokers: brokers}
 
 	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Async에만 적용됨
 	config.Consumer.Interceptors = []sarama.ConsumerInterceptor{&interceptor}
 
-	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
-	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
-	udpPort := *udpPortPtr
-	port := *portPtr
 	whatapConfig := make(map[string]string)
 	whatapConfig["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 	trace.Init(whatapConfig)

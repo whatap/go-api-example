@@ -64,7 +64,7 @@ func main() {
 			Topic:    "tmp-topic",
 			Key:      sarama.StringEncoder("Data Key"),
 			Value:    sarama.StringEncoder("Data Value"),
-			Metadata: trace.etMTrace(ctx),
+			Metadata: trace.GetMTrace(ctx),
 		}
 		producer.Input() <- msg //error check
 

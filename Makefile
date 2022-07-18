@@ -1,6 +1,6 @@
 
 
-all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama
+all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi
 
 mod_download:
 	go mod download -x
@@ -50,6 +50,8 @@ redigo:
 sarama:
 	go build -o bin/app/sarama github.com/Shopify/sarama/sarama.go
 
+chi:
+	go build -o bin/app/chi github.com/go-chi/chi/chi.go
 
 clean:
 	rm -f bin/app/*

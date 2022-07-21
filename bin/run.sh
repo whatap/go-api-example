@@ -47,6 +47,8 @@ start(){
     echo $! >> run.pid
     nohup ./app/sarama -p 8098 -up ${UDP_PORT} > ./logs/sarama.log &
     echo $! >> run.pid
+    nohup ./app/chiv5 -p 8099 -up ${UDP_PORT} > ./logs/chiv5.log &
+    echo $! >> run.pid
 }
 
 start_stress(){

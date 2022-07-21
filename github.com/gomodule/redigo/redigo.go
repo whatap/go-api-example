@@ -104,7 +104,7 @@ func main() {
 
 		conn = conn.WithContext(ctx)
 
-		_, err = conn.Do("SET", "DataKey", "DataValue")
+		_, err = conn.Do("SET", "DataKey", 1)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)
@@ -192,7 +192,8 @@ func main() {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
 
-		conn, err := whatapredigo.DialURLContext(ctx, dataSource)
+		dUrl := fmt.Sprintf("redis://%s", dataSource)
+		conn, err := whatapredigo.DialURLContext(ctx, dUrl)
 		if err != nil {
 			fmt.Println(err)
 			trace.Error(ctx, err)

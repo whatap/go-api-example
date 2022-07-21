@@ -1,6 +1,6 @@
 
 
-all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi
+all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi chiv5
 
 mod_download:
 	go mod download -x
@@ -52,6 +52,9 @@ sarama:
 
 chi:
 	go build -o bin/app/chi github.com/go-chi/chi/chi.go
+
+chiv5:
+	go build -o bin/app/chiv5 github.com/go-chi/chiv5/chi.go
 
 clean:
 	rm -f bin/app/*

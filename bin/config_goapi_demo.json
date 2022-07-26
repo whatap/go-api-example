@@ -1,0 +1,183 @@
+{
+        "Type": "repeat"
+        ,"Con": 5
+        ,"MaxCon": 100
+        ,"IntervalCon": 103
+        ,"Delay": 1003
+        ,"SessionName" : "PHPSESSID"
+        ,"Actions":[
+            {"Url":"http://127.0.0.1:8080/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/roundTripper", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/roundTripper/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/roundTripper/nil", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/roundTripper/nil/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/fileTransport", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8080/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Url":"http://127.0.0.1:8081/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/roundTripper", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/roundTripper/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/roundTripper/nil", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/roundTripper/nil/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/fileTransport", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8081/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Url":"http://127.0.0.1:8083/streamHealth", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8083/ReqSub?sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8083/test/test?aa=33&bb=44", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8083/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+    
+            ,{"Url":"http://127.0.0.1:8086/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8086/upload", "Method":"GET", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "Content-Type":"multipart/form-data","Delay":300}
+    
+            ,{"Url":"http://127.0.0.1:8087/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8087/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+    
+    
+            ,{"Url":"http://127.0.0.1:8088/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8088/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+    
+    
+            ,{"Url":"http://127.0.0.1:8089/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/wrapHandleFunc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/wrapHandleFunc1", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8089/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+    
+            ,{"Url":"http://127.0.0.1:8090/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/query", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/queryRow", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/prepare", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/named", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/exec", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/tx", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/service/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/notx/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8090/notex/error", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Url":"http://127.0.0.1:8091/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/query", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/queryRow", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/prepare", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/named", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/exec", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/tx", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/service/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/notx/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8091/notex/error", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Url":"http://127.0.0.1:8092/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/query", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/queryRow", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/prepare", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/named", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/exec", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/tx", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/service/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/notx/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8092/notex/error", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Url":"http://127.0.0.1:8093/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/query", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/queryRow", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/prepare", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/named", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/exec", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/tx", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/service/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/notx/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8093/notex/error", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"title":"go-chi", "Url":"http://127.0.0.1:8094/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8094/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"title":"gormv1", "Url":"http://127.0.0.1:8095/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"title":"gormv2", "Url":"http://127.0.0.1:8096/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            
+            ,{"title":"Redigo", "Url":"http://127.0.0.1:8097/SetAndGetWithPool", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithDial", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithDialContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithURL", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithURLContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithDialTimeout", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8097/SetAndGetWithDialSendReceive", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"title":"Sarama ", "Url":"http://127.0.0.1:8098/AsyncProduceInput", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8098/SyncProduceInput", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"title":"go-chi/v5", "Url":"http://127.0.0.1:8099/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8099/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+        ]
+}
+

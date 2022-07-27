@@ -67,7 +67,7 @@ func main() {
 		defer trace.End(ctx, nil)
 
 		dbConn, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
-		db, err := whatapgorm.Open(mysql.New(mysql.Config{Conn: dbConn}), &gorm.Config{})
+		db, err := gorm.Open(mysql.New(mysql.Config{Conn: dbConn}), &gorm.Config{})
 		if err != nil {
 			panic("Db 연결에 실패하였습니다.")
 		}

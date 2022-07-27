@@ -71,7 +71,7 @@ func main() {
 			trace.Error(ctx, err)
 			panic("Whatapsql Open Fail")
 		}
-		db, err := whatapgorm.Open("mysql", conn)
+		db, err := gorm.Open("mysql", conn)
 		if err != nil {
 			trace.Error(ctx, err)
 			panic("Gorm Open Fail")

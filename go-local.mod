@@ -26,4 +26,3 @@ require (
 )
 
 replace github.com/whatap/go-api => ../go-api
-replace github.com/whatap/golib => ../golib

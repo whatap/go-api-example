@@ -1,0 +1,62 @@
+
+
+all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi chiv5
+
+mod_download:
+	go mod download -x
+
+mod_tidy:
+	go mod vendor
+	go mod tidy
+
+database_sql:
+	#echo "database/sql"
+	go build -mod vendor -o bin/app/sql database/sql/sql.go
+	go build -mod vendor -o bin/app/mysql database/sql/mysql/mysql.go
+	go build -mod vendor -o bin/app/mssql database/sql/mssql/mssql.go
+	go build -mod vendor -o bin/app/pgsql database/sql/pgsql/pgsql.go
+
+grpc:
+	#echo "gooogle.golang.org/grpc"
+	go build -mod vendor -o bin/app/grpc_client google.golang.org/grpc/client/client.go
+	go build -mod vendor -o bin/app/grpc_server google.golang.org/grpc/server/server.go
+
+gin:
+	#echo "gin-gonic/gin"
+	go build -mod vendor -o bin/app/gin github.com/gin-gonic/gin/gin.go
+
+gorilla:
+	#echo "gorilla/mux"
+	go build -mod vendor -o bin/app/mux github.com/gorilla/mux/mux.go
+
+echo:
+	#echo "labstack/echo"
+	go build -mod vendor -o bin/app/echo github.com/labstack/echo/echo.go
+	go build -mod vendor -o bin/app/echo-v4 github.com/labstack/echo/v4/echo.go
+
+http:
+	#echo "net/http"
+	go build -mod vendor -o bin/app/http_client net/http/client/client.go
+	go build -mod vendor -o bin/app/http_server net/http/server/server.go
+
+gormv2:
+	go build -mod vendor -o bin/app/gormv2 github.com/go-gorm/gorm/gorm.go
+
+gormv1:
+	go build -mod vendor -o bin/app/gormv1 github.com/jinzhu/gorm/gorm.go
+
+redigo:
+	go build -mod vendor -o bin/app/redigo github.com/gomodule/redigo/redigo.go
+
+sarama:
+	go build -mod vendor -o bin/app/sarama github.com/Shopify/sarama/sarama.go
+
+chi:
+	go build -mod vendor -o bin/app/chi github.com/go-chi/chi/chi.go
+
+chiv5:
+	go build -mod vendor -o bin/app/chiv5 github.com/go-chi/chiv5/chi.go
+
+clean:
+	rm -f bin/app/*
+ 

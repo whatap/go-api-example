@@ -1,5 +1,5 @@
 HOME=/home/whatap/go-api-example
-UDP_PORT=6601
+UDP_PORT=6600
 
 CHECK_OS="`cat /etc/*-release`"
 THOS_OS="Linux"

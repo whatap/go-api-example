@@ -1,6 +1,19 @@
 HOME=/home/whatap/go-api-example
 UDP_PORT=6601
 
+CHECK_OS="`cat /etc/*-release`"
+THOS_OS="Linux"
+
+if [[ "$CHECK_OS" == *"CentOS"* ]]; then
+    THIS_OS="CentOS"
+elif [[ "$CHECK_OS" == *"Alpine"* ]]; then
+    THIS_OS="ALPINE"
+elif [[ "$CHECK_OS" == *"Ubuntu"* ]]; then
+    THIS_OS="Ubuntu"
+fi
+
+
+echo "this os ${THIS_OS}"
 start(){
     nohup ./app/http_server -p 8080 -up ${UDP_PORT} > ./logs/http_server-8080.log & 
     echo $! >> run.pid
@@ -52,7 +65,12 @@ start(){
 }
 
 start_stress(){
-    nohup ./httpClient -c 1 -mc 5 -f ./config_goapi_demo.json > ./logs/httpClient.log &
+    HTTPCLIENT_BIN="./httpClient"
+    if [[ "$THIS_OS" == "Alpine" ]]; then
+        HTTPCLIENT_BIN="./httpClient_static"
+    fi
+
+    nohup ${HTTPCLIENT_BIN} -c 1 -mc 5 -f ./config_goapi_demo.json > ./logs/httpClient.log &
     echo $! >> run.pid
 }
 

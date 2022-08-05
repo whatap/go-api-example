@@ -66,7 +66,7 @@ start(){
 
 start_stress(){
     HTTPCLIENT_BIN="./httpClient"
-    if [[ "$THIS_OS" == "Alpine" ]]; then
+    if [[ "$THIS_OS" == "ALPINE" ]]; then
         HTTPCLIENT_BIN="./httpClient_static"
     fi
 

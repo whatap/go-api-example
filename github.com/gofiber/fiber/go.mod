@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/whatap/go-api v0.1.12
 	github.com/whatap/go-api/instrumentation/github.com/gofiber/fiber v0.0.0
-	github.com/whatap/go-api/instrumentation/github.com/valyala/fasthttp v0.0.0 // indirect
+	github.com/whatap/go-api/instrumentation/github.com/valyala/fasthttp v0.0.1 // indirect
 	github.com/whatap/golib v0.0.3 // indirect
 )
 
@@ -28,5 +28,5 @@ require (
 
 replace (
 	github.com/whatap/go-api/instrumentation/github.com/gofiber/fiber v0.0.0 => /home/ubuntu/whatap-go/go-api/instrumentation/github.com/gofiber/fiber
-	github.com/whatap/go-api/instrumentation/github.com/valyala/fasthttp v0.0.0 => /home/ubuntu/whatap-go/go-api/instrumentation/github.com/valyala/fasthttp
+	github.com/whatap/go-api/instrumentation/github.com/valyala/fasthttp v0.0.1 => /home/ubuntu/whatap-go/go-api/instrumentation/github.com/valyala/fasthttp
 )

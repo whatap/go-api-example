@@ -68,9 +68,11 @@ start(){
     nohup ./app/fiberv2 -p 8101 -up ${UDP_PORT} > ./logs/fiberv2.log &
     echo $! >> run.pid
     
-    nohup ./app/awsv2 -p 8102 -up ${UDP_PORT} > ./logs/awsv2.log &
-    echo $! >> run.pid
-    nohup ./app/kuber -p 8103 -up ${UDP_PORT} > ./logs/kuber.log &
+#    nohup ./app/awsv2 -p 8102 -up ${UDP_PORT} > ./logs/awsv2.log &
+#    echo $! >> run.pid
+#    nohup ./app/mongo -p 8103 -up ${UDP_PORT} > ./logs/mongo.log &
+#    echo $! >> run.pid
+    nohup ./app/kuber -p 8104 -up ${UDP_PORT} > ./logs/kuber.log &
     echo $! >> run.pid
 }
 

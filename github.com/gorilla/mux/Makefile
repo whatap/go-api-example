@@ -10,7 +10,7 @@ mod_download:
 	$(GO) mod download -x
 
 test:   #compile warning 제거후 사용 가능
-	$(GO) test ./...
+	$(GO) test ./... -cover
 
 build:
 	$(GO) build -o $(OUTPUT)/mux mux.go

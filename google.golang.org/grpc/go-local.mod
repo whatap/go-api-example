@@ -19,6 +19,6 @@ require (
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 )
 
-replace github.com/whatap/go-api => /home/whatap/go-api
+replace github.com/whatap/go-api => ../../../go-api
 
-replace github.com/whatap/golib => /home/whatap/golib
+replace github.com/whatap/golib => ../../../golib

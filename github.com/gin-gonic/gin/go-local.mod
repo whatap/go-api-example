@@ -31,6 +31,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/whatap/go-api => /home/whatap/go-api
+replace github.com/whatap/go-api => ../../../../go-api
 
-replace github.com/whatap/golib => /home/whatap/golib
+replace github.com/whatap/golib => ../../../../golib

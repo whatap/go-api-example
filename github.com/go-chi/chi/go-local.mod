@@ -15,6 +15,6 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 )
 
-replace github.com/whatap/go-api => /home/whatap/go-api
+replace github.com/whatap/go-api => ../../../../go-api
 
-replace github.com/whatap/golib => /home/whatap/golib
+replace github.com/whatap/golib => ../../../../golib

@@ -26,6 +26,6 @@ require (
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 )
 
-replace github.com/whatap/go-api => /home/whatap/go-api
+replace github.com/whatap/go-api => ../../../../go-api
 
-replace github.com/whatap/golib => /home/whatap/golib
+replace github.com/whatap/golib => ../../../../golib

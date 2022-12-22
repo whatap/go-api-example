@@ -39,7 +39,7 @@ start(){
     echo $! >> run.pid
     nohup ./app/echo -p 8088 -up ${UDP_PORT} > ./logs/echo.log &
     echo $! >> run.pid
-    nohup ./app/echo-v4 -p 8089 -up ${UDP_PORT} > ./logs/echo-v4.log &
+    nohup ./app/echov4 -p 8089 -up ${UDP_PORT} > ./logs/echov4.log &
     echo $! >> run.pid
 
     nohup ./app/sql -p 8090 -up ${UDP_PORT} > ./logs/sql.log &
@@ -61,6 +61,18 @@ start(){
     nohup ./app/sarama -p 8098 -up ${UDP_PORT} > ./logs/sarama.log &
     echo $! >> run.pid
     nohup ./app/chiv5 -p 8099 -up ${UDP_PORT} > ./logs/chiv5.log &
+    echo $! >> run.pid
+    
+    nohup ./app/fasthttp -p 8100 -up ${UDP_PORT} > ./logs/fasthttp.log &
+    echo $! >> run.pid
+    nohup ./app/fiberv2 -p 8101 -up ${UDP_PORT} > ./logs/fiberv2.log &
+    echo $! >> run.pid
+    
+#    nohup ./app/awsv2 -p 8102 -up ${UDP_PORT} > ./logs/awsv2.log &
+#    echo $! >> run.pid
+#    nohup ./app/mongo -p 8103 -up ${UDP_PORT} > ./logs/mongo.log &
+#    echo $! >> run.pid
+    nohup ./app/kuber -p 8104 -up ${UDP_PORT} > ./logs/kuber.log &
     echo $! >> run.pid
 }
 

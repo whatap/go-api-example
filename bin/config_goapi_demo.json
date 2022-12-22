@@ -181,6 +181,38 @@
             ,{"Url":"http://127.0.0.1:8099/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8099/upload", "Method":"POST", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "ContentType":"multipart/form-data","Delay":300}
             
+            ,{"Title":"valyala/fasthttp", "Url":"http://127.0.0.1:8100/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8100/upload", "Method":"POST", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "ContentType":"multipart/form-data","Delay":300}
+            
+            ,{"Title":"github.com/fiber/v2", "Url":"http://127.0.0.1:8101/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8101/upload", "Method":"POST", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "ContentType":"multipart/form-data","Delay":300}
+            
+            ,{"Title":"github.com/aws/aws-sdk-go-v2", "Url":"http://127.0.0.1:8102/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8102/ListS3", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8102/SleepAndListS3", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8102/DescribeEC2", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8102/SleepAndDescribeEC2", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Title":"k8s.io/client-go/kubernetes", "Url":"http://127.0.0.1:8103/index", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8103/main", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8103/configmap/rum-ote/ippcode", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8103/pods/rum-ote", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8103/deployments/rum-ote", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+             
         ]
 }
 

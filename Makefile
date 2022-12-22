@@ -1,61 +1,118 @@
+GO=/usr/local/go/bin/go
 
-
-all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi chiv5
+all: http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi fasthttp fiber kubernetes
+#all: mod_tidy mod_download http database_sql grpc gin gorilla echo redigo sarama chi chiv5 fasthttp fiberv2 mongo awsv2 kubernetes
 
 mod_download:
-	go mod download -x
+	$(GO) mod download -x
 
 mod_tidy:
-	go mod tidy
+	$(GO) mod tidy
 
 database_sql:
 	#echo "database/sql"
-	go build -o bin/app/sql database/sql/sql.go
-	go build -o bin/app/mysql database/sql/mysql/mysql.go
-	go build -o bin/app/mssql database/sql/mssql/mssql.go
-	go build -o bin/app/pgsql database/sql/pgsql/pgsql.go
+	make -C database/sql 
 
 grpc:
 	#echo "gooogle.golang.org/grpc"
-	go build -o bin/app/grpc_client google.golang.org/grpc/client/client.go
-	go build -o bin/app/grpc_server google.golang.org/grpc/server/server.go
+	make -C google.golang.org/grpc
 
 gin:
 	#echo "gin-gonic/gin"
-	go build -o bin/app/gin github.com/gin-gonic/gin/gin.go
+	make -C github.com/gin-gonic/gin
 
 gorilla:
 	#echo "gorilla/mux"
-	go build -o bin/app/mux github.com/gorilla/mux/mux.go
+	make -C github.com/gorilla/mux
 
 echo:
 	#echo "labstack/echo"
-	go build -o bin/app/echo github.com/labstack/echo/echo.go
-	go build -o bin/app/echo-v4 github.com/labstack/echo/v4/echo.go
+	make -C github.com/labstack/echo
 
 http:
 	#echo "net/http"
-	go build -o bin/app/http_client net/http/client/client.go
-	go build -o bin/app/http_server net/http/server/server.go
+	make -C net/http
 
 gormv2:
-	go build -o bin/app/gormv2 github.com/go-gorm/gorm/gorm.go
+	#echo "go-gorm/gorm"
+	make -C github.com/go-gorm/gorm
 
 gormv1:
-	go build -o bin/app/gormv1 github.com/jinzhu/gorm/gorm.go
+	#echo "jinzhu/gorm"
+	make -C github.com/jinzhu/gorm
 
 redigo:
-	go build -o bin/app/redigo github.com/gomodule/redigo/redigo.go
+	#echo "gomodule/redigo"
+	make -C github.com/gomodule/redigo
 
 sarama:
-	go build -o bin/app/sarama github.com/Shopify/sarama/sarama.go
+	#echo "Shopify/sarama"
+	make -C github.com/Shopify/sarama
 
 chi:
-	go build -o bin/app/chi github.com/go-chi/chi/chi.go
+	#echo "go-chi/chi"
+	make -C github.com/go-chi/chi
 
-chiv5:
-	go build -o bin/app/chiv5 github.com/go-chi/chiv5/chi.go
+fasthttp:
+	#echo "valyala/fasthttp"
+	make -C github.com/valyala/fasthttp
 
+fiber:
+	#echo "goviber/fiber"
+	make -C github.com/gofiber/fiber
+
+mongo:
+	make -C github.com/mongodb/mongo-go-driver
+	
+aws:
+	#echo "aws/aws-sdk-go-v2"
+	make -C github.com/aws
+
+kubernetes:
+	#echo "k8s.io/client-go/kubernetes"
+	make -C k8s.io/client-go/kubernetes
+	
+local:
+	cp ./database/sql/go-local.mod ./database/sql/go.mod
+	#cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
+	cp ./github.com/gin-gonic/gin/go-local.mod ./github.com/gin-gonic/gin/go.mod
+	cp ./github.com/go-chi/chi/go-local.mod ./github.com/go-chi/chi/go.mod
+	cp ./github.com/go-gorm/gorm/go-local.mod ./github.com/go-gorm/gorm/go.mod
+	cp ./github.com/gofiber/fiber/go-local.mod ./github.com/gofiber/fiber/go.mod
+	cp ./github.com/gomodule/redigo/go-local.mod ./github.com/gomodule/redigo/go.mod
+	cp ./github.com/gorilla/mux/go-local.mod ./github.com/gorilla/mux/go.mod
+	cp ./github.com/jinzhu/gorm/go-local.mod ./github.com/jinzhu/gorm/go.mod
+	cp ./github.com/labstack/echo/go-local.mod ./github.com/labstack/echo/go.mod
+	#cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
+	cp ./github.com/Shopify/sarama/go-local.mod ./github.com/Shopify/sarama/go.mod
+	cp ./github.com/valyala/fasthttp/go-local.mod ./github.com/valyala/fasthttp/go.mod
+	cp ./google.golang.org/grpc/go-local.mod ./google.golang.org/grpc/go.mod
+	cp ./k8s.io/client-go/kubernetes/go-local.mod ./k8s.io/client-go/kubernetes/go.mod
+	cp ./net/http/go-local.mod ./net/http/go.mod
+
+	
 clean:
-	rm -f bin/app/*
- 
+	make -C database/sql clean 
+	make -C google.golang.org/grpc clean
+	make -C github.com/gin-gonic/gin clean
+	make -C github.com/gorilla/mux clean
+	make -C github.com/labstack/echo clean
+	make -C net/http clean
+	make -C github.com/go-gorm/gorm clean
+	make -C github.com/jinzhu/gorm clean 
+	make -C github.com/gomodule/redigo clean 
+	make -C github.com/Shopify/sarama clean
+	make -C github.com/go-chi/chi clean
+	make -C github.com/valyala/fasthttp clean
+	make -C github.com/gofiber/fiber clean
+	#make -C github.com/mongodb/mongo-go-driver clean
+	#make -C github.com/aws clean
+	make -C k8s.io/client-go/kubernetes clean
+
+go_clean:
+	$(GO) clean -modcache
+	$(GO) clean -testcache
+	$(GO) clean -cache
+	$(GO) clean 
+
+	

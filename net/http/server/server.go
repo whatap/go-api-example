@@ -518,7 +518,7 @@ func main() {
 		}
 		if res != nil {
 			if res.StatusCode != 404 {
-				fmt.Println("for %s, StatusCode = %d, want 404", badURL, res.StatusCode)
+				fmt.Printf("for %s, StatusCode = %d, want 404", badURL, res.StatusCode)
 			}
 		}
 	}))

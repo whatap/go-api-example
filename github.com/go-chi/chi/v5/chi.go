@@ -114,13 +114,13 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(whatapchi.Middleware)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		tp, err := template.ParseFiles("templates/github.com/go-chi/index.html")
+		tp, err := template.ParseFiles("templates/github.com/go-chi/v5/index.html")
 		if err != nil {
 			fmt.Println("Template not loaded, ", err)
 			return
 		}
 		data := &HTMLData{}
-		data.Title = "chi server"
+		data.Title = "chi/v5 server"
 		data.Content = r.RequestURI
 
 		tp.Execute(w, data)

@@ -1,4 +1,4 @@
-module github.com/whatap/go-api-example/goolg.golang.org/grpc
+module github.com/whatap/go-api-example/google.golang.org/grpc
 
 go 1.18
 

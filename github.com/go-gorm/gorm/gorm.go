@@ -45,7 +45,7 @@ func main() {
 
 	templatePath := "templates/github.com/go-gorm/index.html"
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", trace.Func(func(w http.ResponseWriter, r *http.Request) {
 		tp, err := template.ParseFiles(templatePath)
 		if err != nil {
 			fmt.Println("Template not loaded, ", err)
@@ -57,14 +57,13 @@ func main() {
 		data.Content = r.RequestURI
 
 		tp.Execute(w, data)
-	})
+	}))
 
 	// mysql, postgresql, mssql 등 기존 whatap driver 사용 케이스
 
 	//Case 1. mysql
-	http.HandleFunc("/WhatapDriverTest", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/WhatapDriverTest", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		dbConn, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
 		db, err := gorm.Open(mysql.New(mysql.Config{Conn: dbConn}), &gorm.Config{})
@@ -78,7 +77,7 @@ func main() {
 			db.Create(&Product{Code: i, Price: i * 100})
 		}
 
-	})
+	}))
 
 	// gorm hooking 케이스
 	serviceDB, err := whatapgorm.Open(sqlite.Open("test.db"), &gorm.Config{})
@@ -90,9 +89,8 @@ func main() {
 	serviceDB.AutoMigrate(&Product{})
 
 	//Case 2. Insert Query + Delete Query
-	http.HandleFunc("/InsertAndDelete", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/InsertAndDelete", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
@@ -105,12 +103,11 @@ func main() {
 
 		db.Unscoped().Delete(&Product{}, "Code >= ? AND Code < ?", 0, 100)
 
-	})
+	}))
 
 	//Case 3. Insert Query + Update Query
-	http.HandleFunc("/InsertAndUpdate", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/InsertAndUpdate", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
@@ -128,10 +125,10 @@ func main() {
 			tx.Model(&product).Update("price", product.Price*100)
 			tx.Commit()
 		}
-	})
+	}))
 
 	//Case 4. Non Context + Select
-	http.HandleFunc("/Select", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/Select", trace.Func(func(w http.ResponseWriter, r *http.Request) {
 		var products []Product
 		var buffer bytes.Buffer
 		serviceDB.Find(&products, "1 = 1")
@@ -146,12 +143,11 @@ func main() {
 		buffer.WriteString("</body></html>")
 
 		_, _ = w.Write(buffer.Bytes())
-	})
+	}))
 
 	//Case 5. WithContext + Select
-	http.HandleFunc("/SelectWithContext", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/SelectWithContext", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		db := whatapgorm.WithContext(ctx, serviceDB)
 
@@ -169,12 +165,11 @@ func main() {
 		buffer.WriteString("</body></html>")
 
 		_, _ = w.Write(buffer.Bytes())
-	})
+	}))
 
 	//Case 5. Delete ALl
-	http.HandleFunc("/DeleteAll", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/DeleteAll", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
@@ -182,12 +177,11 @@ func main() {
 		}
 
 		db.Unscoped().Delete(&Product{}, "1 = 1")
-	})
+	}))
 
 	//Case 6. DB Transaction
-	http.HandleFunc("/DBTxTest", func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := trace.StartWithRequest(r)
-		defer trace.End(ctx, nil)
+	http.HandleFunc("/DBTxTest", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
@@ -226,15 +220,13 @@ func main() {
 		db.Model(&Product{}).Count(&afterCount)
 
 		trace.Step(ctx, "TX TEST-Commit", fmt.Sprintf("Commit Test : input - %d, commit - %d", beforeCount, afterCount), 1, 1)
-	})
+	}))
 
 	//Case 7. Multi DB Connection + Error Trace
-	http.HandleFunc("/DBTxTestMulti", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/DBTxTestMulti", trace.Func(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		for i := 0; i < 100; i++ {
 			go func(i int) {
-				ctx, _ := trace.StartWithRequest(r)
-				defer trace.End(ctx, nil)
-
 				db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 				if err != nil {
 					panic("Db 연결에 실패하였습니다.")
@@ -265,8 +257,9 @@ func main() {
 				tx.Commit()
 			}(i)
 		}
-	})
+	}))
 
+	fmt.Println("Start :", port, ", Agent Udp Port:", udpPort)
 	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
 }

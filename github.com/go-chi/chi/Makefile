@@ -1,5 +1,8 @@
 GO=/usr/local/go/bin/go
-OUTPUT=../../../bin/app
+BIN=../../../bin
+OUTPUT=$(BIN)/app
+TEMPLATE=$(BIN)/templates
+WHATAP_CONF=$(BIN)/whatap.conf
 
 all: mod_tidy mod_download build test
 
@@ -13,12 +16,17 @@ test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
 
 build:
-	$(GO) build -o $(OUTPUT)/chi chi.go
-	$(GO) build -o $(OUTPUT)/chiv5 v5/chi.go
-
+	$(GO) build -o $(OUTPUT)/chi/chi chi.go
+	cp -R $(TEMPLATE) $(OUTPUT)/chi/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/chi/
+	
+	$(GO) build -o $(OUTPUT)/chiv5/chiv5 v5/chi.go
+	cp -R $(TEMPLATE) $(OUTPUT)/chiv5/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/chiv5/
+	
 clean :
-	rm -f $(OUTPUT)/chi
-	rm -f $(OUTPUT)/chiv5
+	rm -rf $(OUTPUT)/chi
+	rm -rf $(OUTPUT)/chiv5
 
 clean_go:
 	$(GO) clean -modcache

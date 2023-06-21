@@ -1,5 +1,8 @@
 GO=/usr/local/go/bin/go
-OUTPUT=../../bin/app
+BIN=../../bin
+OUTPUT=$(BIN)/app
+TEMPLATE=$(BIN)/templates
+WHATAP_CONF=$(BIN)/whatap.conf
 
 all: mod_tidy mod_download build test
 
@@ -13,16 +16,28 @@ test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
 
 build:
-	$(GO) build -o $(OUTPUT)/sql sql.go
-	$(GO) build -o $(OUTPUT)/mssql mssql/mssql.go
-	$(GO) build -o $(OUTPUT)/mysql mysql/mysql.go
-	$(GO) build -o $(OUTPUT)/pgsql pgsql/pgsql.go
+	$(GO) build -o $(OUTPUT)/sql/sql sql.go
+	cp -R $(TEMPLATE) $(OUTPUT)/sql/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/sql/
+	
+	$(GO) build -o $(OUTPUT)/mssql/mssql mssql/mssql.go
+	cp -R $(TEMPLATE) $(OUTPUT)/mssql/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/mssql/
+	
+	$(GO) build -o $(OUTPUT)/mysql/mysql mysql/mysql.go
+	cp -R $(TEMPLATE) $(OUTPUT)/mysql/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/mysql/
+	
+	$(GO) build -o $(OUTPUT)/pgsql/pgsql pgsql/pgsql.go
+	cp -R $(TEMPLATE) $(OUTPUT)/pgsql/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/pgsql/
+	
 
 clean :
-	rm -f $(OUTPUT)/sql
-	rm -f $(OUTPUT)/mssql
-	rm -f $(OUTPUT)/mysql
-	rm -f $(OUTPUT)/pgsql
+	rm -rf $(OUTPUT)/sql
+	rm -rf $(OUTPUT)/mssql
+	rm -rf $(OUTPUT)/mysql
+	rm -rf $(OUTPUT)/pgsql
 
 clean_go:
 	$(GO) clean -modcache

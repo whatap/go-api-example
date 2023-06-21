@@ -1,5 +1,8 @@
 GO=/usr/local/go/bin/go
-OUTPUT=../../bin/app
+BIN=../../bin
+OUTPUT=$(BIN)/app
+TEMPLATE=$(BIN)/templates
+WHATAP_CONF=$(BIN)/whatap.conf
 
 all: mod_tidy mod_download build test
 
@@ -13,13 +16,19 @@ test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
 
 build:
-	$(GO) build -o $(OUTPUT)/http_client client/client.go
-	$(GO) build -o $(OUTPUT)/http_server server/server.go
+	$(GO) build -o $(OUTPUT)/http_client/http_client client/client.go
+	cp -R $(TEMPLATE) $(OUTPUT)/http_client/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/http_client/
 	
-
+	$(GO) build -o $(OUTPUT)/http_server/http_server server/server.go
+	cp -R $(TEMPLATE) $(OUTPUT)/http_server/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/http_server/
+	cp -R $(OUTPUT)/http_server $(OUTPUT)/http_server1
+	
 clean :
-	rm -f $(OUTPUT)/http_client
-	rm -f $(OUTPUT)/http_server
+	rm -rf $(OUTPUT)/http_client
+	rm -rf $(OUTPUT)/http_server
+	rm -rf $(OUTPUT)/http_server1
 
 clean_go:
 	$(GO) clean -modcache

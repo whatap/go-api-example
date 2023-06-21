@@ -54,6 +54,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() {
 		if err := producer.Close(); err != nil {
 			panic(err)
@@ -166,10 +167,19 @@ func main() {
 
 	// consume 1회당1tx
 	consumer, err := sarama.NewConsumer(brokers, config)
+	if err != nil {
+		fmt.Println("error new consumer ", err)
+	}
 	topic := "tmp-topic"
 
-	partitions, _ := consumer.Partitions(topic)
-	consume, _ := consumer.ConsumePartition(topic, partitions[0], consumerOffset)
+	partitions, err := consumer.Partitions(topic)
+	if err != nil {
+		fmt.Println("error consumer partitions ", err)
+	}
+	consume, err := consumer.ConsumePartition(topic, partitions[0], consumerOffset)
+	if err != nil {
+		fmt.Println("error consumer ConsumePartition ", err)
+	}
 
 	if consume == nil {
 		fmt.Println("consume nil")

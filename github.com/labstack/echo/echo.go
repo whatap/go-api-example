@@ -23,6 +23,7 @@ import (
 	"github.com/whatap/go-api/instrumentation/github.com/labstack/echo/whatapecho"
 	"github.com/whatap/go-api/method"
 	"github.com/whatap/go-api/trace"
+	"github.com/whatap/golib/util/logo"
 )
 
 func getUser(ctx context.Context) {
@@ -102,14 +103,21 @@ func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo:3306)/doremimaker", " dataSourceName ")
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
+
 	flag.Parse()
 	port := *portPtr
 	udpPort := *udpPortPtr
 	dataSource := *dataSourcePtr
+	IsWhatap := *setWhatapPtr
 
-	config := make(map[string]string)
-	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	trace.Init(config)
+	if IsWhatap {
+		logo.Print("golang", "v0.2.0")
+
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
@@ -126,7 +134,10 @@ func main() {
 	e := echo.New()
 	e.Renderer = t
 	e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
-	e.Pre(whatapecho.Middleware())
+	if IsWhatap {
+		e.Pre(whatapecho.Middleware())
+	}
+
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
@@ -171,6 +182,53 @@ func main() {
 			buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
 		}
 
+		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
+		fmt.Println("Response -", c.Response())
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
+	})
+
+	e.GET("/httpc/query", func(c echo.Context) error {
+		var cnt int
+		if i, err := strconv.Atoi(c.QueryParam("cnt")); err == nil {
+			cnt = i
+		} else {
+			cnt = 1
+		}
+		var sleep int
+		if i, err := strconv.Atoi(c.QueryParam("sleep")); err == nil {
+			sleep = i
+		} else {
+			sleep = 1
+		}
+		var loop int
+		if i, err := strconv.Atoi(c.QueryParam("loop")); err == nil {
+			loop = i
+		} else {
+			loop = 1
+		}
+
+		ctx := c.Request().Context()
+		fmt.Println("Request -", c.Request())
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+
+		callUrl := "http://localhost:8081/index"
+		for i := 0; i < loop; i++ {
+			for j := 0; j < cnt; j++ {
+
+				httpcCtx, _ := httpc.Start(ctx, callUrl)
+				if statusCode, data, err := httpWithRequest("GET", callUrl, "", httpc.GetMTrace(httpcCtx)); err == nil {
+					httpc.End(httpcCtx, statusCode, "", nil)
+					buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
+				} else {
+					httpc.End(httpcCtx, -1, "", err)
+					buffer.WriteString(fmt.Sprintln("httpc Error callUrl=", callUrl, ", err=", err))
+				}
+			}
+		}
+		if sleep > 0 {
+			time.Sleep(time.Duration(sleep) * time.Millisecond)
+		}
 		trace.Step(ctx, "Text Message 2", "Message2", 6, 6)
 		fmt.Println("Response -", c.Response())
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
@@ -259,6 +317,96 @@ func main() {
 
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 
+	})
+
+	e.GET("/sql/query", func(c echo.Context) error {
+
+		var cnt int
+		if i, err := strconv.Atoi(c.QueryParam("cnt")); err == nil {
+			cnt = i
+		} else {
+			cnt = 1
+		}
+		var sleep int
+		if i, err := strconv.Atoi(c.QueryParam("sleep")); err == nil {
+			sleep = i
+		} else {
+			sleep = 1
+		}
+		var loop int
+		if i, err := strconv.Atoi(c.QueryParam("loop")); err == nil {
+			loop = i
+		} else {
+			loop = 1
+		}
+
+		ctx := c.Request().Context()
+		var buffer bytes.Buffer
+		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
+
+		var query string
+
+		// 복수 Row를 갖는 SQL 쿼리
+		var id int
+		var subject string
+		for i := 0; i < loop; i++ {
+			for j := 0; j < cnt; j++ {
+				query = "select id, subject from tbl_faq limit 10"
+				rows, err := db.QueryContext(ctx, query)
+				if err != nil {
+					return fmt.Errorf("db.QueryContext error:%s", err.Error())
+				}
+				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+
+				for rows.Next() {
+					err := rows.Scan(&id, &subject)
+					if err != nil {
+						return fmt.Errorf("rows.Scan error:%s", err.Error())
+					}
+					buffer.WriteString(fmt.Sprintln(id, subject))
+				}
+
+				// Prepared Statement 생성
+				query = "select id, subject from tbl_faq where id = ? limit ?"
+				stmt, err := db.PrepareContext(ctx, query)
+				if err != nil {
+					return fmt.Errorf("db.Prepare error:%s", err.Error())
+				}
+				defer stmt.Close()
+
+				// Prepared Statement 실행
+				params := make([]interface{}, 0)
+				params = append(params, 8)
+				params = append(params, 1)
+
+				rows1, _ := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+				defer rows1.Close()
+
+				for rows1.Next() {
+					err := rows1.Scan(&id, &subject)
+					if err != nil {
+						return fmt.Errorf("rows1.Scan error:%s", err.Error())
+					}
+					buffer.WriteString(fmt.Sprintln(id, subject))
+				}
+
+				rows2, _ := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+				defer rows2.Close()
+
+				for rows1.Next() {
+					err := rows2.Scan(&id, &subject)
+					if err != nil {
+						return fmt.Errorf("rows2.Scan error:%s", err.Error())
+					}
+					buffer.WriteString(fmt.Sprintln(id, subject))
+				}
+			}
+		}
+
+		if sleep > 0 {
+			time.Sleep(time.Duration(sleep) * time.Millisecond)
+		}
+		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 	e.GET("/panic", func(c echo.Context) error {
 		panic(fmt.Errorf("custom panic"))

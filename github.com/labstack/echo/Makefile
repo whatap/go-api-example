@@ -1,5 +1,8 @@
 GO=/usr/local/go/bin/go
-OUTPUT=../../../bin/app
+BIN=../../../bin
+OUTPUT=$(BIN)/app
+TEMPLATE=$(BIN)/templates
+WHATAP_CONF=$(BIN)/whatap.conf
 
 all: mod_tidy mod_download build test
 
@@ -13,12 +16,18 @@ test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
 
 build:
-	$(GO) build -o $(OUTPUT)/echo echo.go
-	$(GO) build -o $(OUTPUT)/echov4 v4/echo.go
+	$(GO) build -o $(OUTPUT)/echo/echo echo.go
+	cp -R $(TEMPLATE) $(OUTPUT)/echo/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/echo/
+	
+	$(GO) build -o $(OUTPUT)/echov4/echov4 v4/echo.go
+	cp -R $(TEMPLATE) $(OUTPUT)/echov4/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/echov4/
+	
 
 clean :
-	rm -f $(OUTPUT)/echo
-	rm -f $(OUTPUT)/echov4
+	rm -rf $(OUTPUT)/echo
+	rm -rf $(OUTPUT)/echov4
 
 clean_go:
 	$(GO) clean -modcache

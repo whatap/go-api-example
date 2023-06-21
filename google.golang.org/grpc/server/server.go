@@ -101,7 +101,8 @@ func main() {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", *grpcHost, *grpcPort), grpc.WithInsecure(),
 			grpc.WithBlock(),
 			grpc.WithUnaryInterceptor(whatapgrpc.UnaryClientInterceptor()),
-			grpc.WithStreamInterceptor(whatapgrpc.StreamClientInterceptor()))
+			grpc.WithStreamInterceptor(whatapgrpc.StreamClientInterceptor()),
+			grpc.WithTimeout(10*time.Second))
 
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)

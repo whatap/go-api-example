@@ -1,5 +1,8 @@
 GO=/usr/local/go/bin/go
-OUTPUT=../../../bin/app
+BIN=../../../bin
+OUTPUT=$(BIN)/app
+TEMPLATE=$(BIN)/templates
+WHATAP_CONF=$(BIN)/whatap.conf
 
 all: mod_tidy mod_download build test
 
@@ -13,10 +16,12 @@ test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
 
 build:
-	$(GO) build -o $(OUTPUT)/mux mux.go
+	$(GO) build -o $(OUTPUT)/gorilla/gorilla mux.go
+	cp -R $(TEMPLATE) $(OUTPUT)/gorilla/
+	cp -R $(WHATAP_CONF) $(OUTPUT)/gorilla
 
 clean :
-	rm -f $(OUTPUT)/mux
+	rm -rf $(OUTPUT)/gorilla
 
 clean_go:
 	$(GO) clean -modcache

@@ -45,6 +45,10 @@ func httpGet(callUrl string) (int, string, error) {
 		}
 
 	} else {
+		if resp != nil {
+			fmt.Println(">>>>> httpGet error but resp not nil and close ")
+			defer resp.Body.Close()
+		}
 		fmt.Println(err)
 		return -1, "", err
 	}
@@ -73,24 +77,31 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 				req.Header.Add(key, headers.Get(key))
 			}
 		}
-		if resp, err := client.Do(req); err == nil {
+		resp, err1 := client.Do(req)
+		if err1 == nil {
 			defer resp.Body.Close()
-			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+			if data, err2 := ioutil.ReadAll(resp.Body); err2 == nil {
 				fmt.Println("status=", resp.StatusCode)
-				return resp.StatusCode, string(data), err
+				return resp.StatusCode, string(data), err2
 			} else {
-				fmt.Println("Read response Error ", err)
-				return resp.StatusCode, "", err
+				fmt.Println("Read response Error ", err2)
+				return resp.StatusCode, "", err2
 			}
-		} else {
-			fmt.Println("client.Do Error ", err)
-			return -2, "", err
 		}
+
+		if resp != nil {
+			fmt.Println(">>>>> client.Do error but resp not nil and close ")
+			defer resp.Body.Close()
+		}
+		fmt.Println("client.Do Error ", err1)
+
+		return -2, "", err
 
 	} else {
 		fmt.Println("NewRequest Error ", err)
 		return -1, "", err
 	}
+
 }
 
 type AccessLogRoundTrip struct {
@@ -290,6 +301,46 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
+			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
+			fmt.Printf("Error %s", err.Error())
+		}
+
+		buffer.WriteString("</body></html>")
+		_, _ = w.Write(buffer.Bytes())
+		trace.Step(ctx, "Text Message", "Message roundTripper", 6, 6)
+		fmt.Println("Response -", r.Response)
+	})
+
+	http.HandleFunc("/roundTripper/inputCallUrl", func(w http.ResponseWriter, r *http.Request) {
+		ctx, _ := trace.StartWithRequest(r)
+		defer trace.End(ctx, nil)
+
+		r.ParseForm()
+		callUrl := r.FormValue("url")
+
+		w.Header().Add("Content-Type", "text/html")
+		var buffer bytes.Buffer
+		buffer.WriteString("<html><head><title>net/http server</title></head><body>")
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		//callUrl := "http://c7default.test.com/index"
+
+		client := http.DefaultClient
+		client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
+		if resp, err := client.Get(callUrl); err == nil {
+			defer resp.Body.Close()
+			if data, err := ioutil.ReadAll(resp.Body); err == nil {
+				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
+			}
+		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -319,6 +370,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -347,6 +402,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -375,6 +434,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -404,6 +467,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -432,6 +499,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -459,6 +530,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -485,6 +560,10 @@ func main() {
 				buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", resp.StatusCode, ", data=", string(data)))
 			}
 		} else {
+			if resp != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer resp.Body.Close()
+			}
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", error ", err))
 			fmt.Printf("Error %s", err.Error())
 		}
@@ -505,9 +584,14 @@ func main() {
 
 		c := &http.Client{Transport: wrapTransport}
 		if r, err := c.Get("file:///file.txt"); err == nil {
+			defer r.Body.Close()
 			fmt.Println("file print")
 			io.Copy(os.Stdout, r.Body)
 		} else {
+			if r != nil {
+				fmt.Println(">>>>> client.Get error but resp not nil and close ")
+				defer r.Body.Close()
+			}
 			fmt.Println("c.Get error ", err)
 		}
 
@@ -517,6 +601,8 @@ func main() {
 			fmt.Println("badUrl get error", err)
 		}
 		if res != nil {
+			defer res.Body.Close()
+			io.Copy(os.Stdout, res.Body)
 			if res.StatusCode != 404 {
 				fmt.Printf("for %s, StatusCode = %d, want 404", badURL, res.StatusCode)
 			}

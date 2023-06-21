@@ -124,7 +124,7 @@ func main() {
 	// Whatap go
 	config := make(map[string]string)
 	config["net_udp_port"] = "127.0.0.1"
-	config["net_udp_port"] = "6600"
+	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 	trace.Init(config)
 	defer trace.Shutdown()
 

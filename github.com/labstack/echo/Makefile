@@ -24,7 +24,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/echov4/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/echov4/
 	
-
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/echo
 	rm -rf $(OUTPUT)/echov4

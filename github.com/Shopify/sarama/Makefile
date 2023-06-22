@@ -20,7 +20,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/sarama
 	cp -R $(WHATAP_CONF) $(OUTPUT)/sarama
 	
-
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/sarama
 

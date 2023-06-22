@@ -27,6 +27,9 @@ build:
 	cp -R $(OUTPUT)/grpc_server $(OUTPUT)/grpc_server1
 	cp -R $(OUTPUT)/grpc_server $(OUTPUT)/grpc_server2
 	
+upgrade:
+	$(GO) get github.com/whatap/go-api
+
 
 clean :
 	rm -rf $(OUTPUT)/grpc_client

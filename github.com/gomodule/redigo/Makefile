@@ -20,6 +20,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/redigo/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/redigo/
 
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/redigo
 

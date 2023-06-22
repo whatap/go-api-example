@@ -20,6 +20,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/gormv1/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/gormv1/
 
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/gormv1
 

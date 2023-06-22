@@ -20,6 +20,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/fasthttp/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/fasthttp/
 
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/fasthttp
 

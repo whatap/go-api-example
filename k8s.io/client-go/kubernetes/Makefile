@@ -20,6 +20,10 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/kuber/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/kuber/
 
+upgrade:
+	$(GO) get github.com/whatap/go-api
+
+
 clean :
 	rm -rf $(OUTPUT)/kuber
 

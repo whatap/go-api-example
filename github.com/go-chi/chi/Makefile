@@ -23,7 +23,10 @@ build:
 	$(GO) build -o $(OUTPUT)/chiv5/chiv5 v5/chi.go
 	cp -R $(TEMPLATE) $(OUTPUT)/chiv5/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/chiv5/
-	
+
+upgrade:
+	$(GO) get github.com/whatap/go-api
+		
 clean :
 	rm -rf $(OUTPUT)/chi
 	rm -rf $(OUTPUT)/chiv5

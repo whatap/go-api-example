@@ -19,7 +19,10 @@ build:
 	$(GO) build -o $(OUTPUT)/gin/gin gin.go
 	cp -R $(TEMPLATE) $(OUTPUT)/gin/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/gin/
-	
+
+upgrade:
+	$(GO) get github.com/whatap/go-api
+		
 clean :
 	rm -rf $(OUTPUT)/gin
 

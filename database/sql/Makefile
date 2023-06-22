@@ -32,7 +32,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/pgsql/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/pgsql/
 	
-
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/sql
 	rm -rf $(OUTPUT)/mssql

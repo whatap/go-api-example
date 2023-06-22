@@ -20,6 +20,9 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/fiberv2/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/fiberv2
 
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/fiberv2
 

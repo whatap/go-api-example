@@ -19,7 +19,10 @@ build:
 	$(GO) build -o $(OUTPUT)/gorilla/gorilla mux.go
 	cp -R $(TEMPLATE) $(OUTPUT)/gorilla/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/gorilla
-
+	
+upgrade:
+	$(GO) get github.com/whatap/go-api
+	
 clean :
 	rm -rf $(OUTPUT)/gorilla
 

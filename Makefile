@@ -95,7 +95,24 @@ local:
 	#cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
 	#cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
 	
-	
+upgrade:
+	make -C database/sql upgrade 
+	make -C net/http upgrade
+	make -C google.golang.org/grpc upgrade
+	make -C github.com/gin-gonic/gin upgrade
+	make -C github.com/gorilla/mux upgrade
+	make -C github.com/labstack/echo upgrade
+	make -C github.com/go-chi/chi upgrade
+	make -C github.com/valyala/fasthttp upgrade
+	make -C github.com/gofiber/fiber upgrade
+	make -C github.com/go-gorm/gorm upgrade
+	make -C github.com/gomodule/redigo upgrade 
+	make -C github.com/jinzhu/gorm upgrade 
+	make -C github.com/Shopify/sarama upgrade
+	make -C k8s.io/client-go/kubernetes upgrade
+	#make -C github.com/aws upgrade
+	#make -C github.com/mongodb/mongo-go-driver upgrade
+		
 clean:
 	make -C database/sql clean 
 	make -C net/http clean
@@ -115,10 +132,27 @@ clean:
 	#make -C github.com/mongodb/mongo-go-driver clean
 	
 
-go_clean:
+clean_go:
 	$(GO) clean -modcache
 	$(GO) clean -testcache
 	$(GO) clean -cache
 	$(GO) clean 
 
+
+	make -C database/sql clean_go
+	make -C net/http clean_go
+	make -C google.golang.org/grpc clean_go
+	make -C github.com/gin-gonic/gin clean_go
+	make -C github.com/gorilla/mux clean_go
+	make -C github.com/labstack/echo clean_go
+	make -C github.com/go-chi/chi clean_go
+	make -C github.com/valyala/fasthttp clean_go
+	make -C github.com/gofiber/fiber clean_go
+	make -C github.com/go-gorm/gorm clean_go
+	make -C github.com/gomodule/redigo clean_go 
+	make -C github.com/jinzhu/gorm clean_go 
+	make -C github.com/Shopify/sarama clean_go
+	make -C k8s.io/client-go/kubernetes clean_go
+	#make -C github.com/aws clean_go
+	#make -C github.com/mongodb/mongo-go-driver clean_go
 	

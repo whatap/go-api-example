@@ -24,6 +24,10 @@ build:
 	cp -R $(TEMPLATE) $(OUTPUT)/http_server/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/http_server/
 	cp -R $(OUTPUT)/http_server $(OUTPUT)/http_server1
+
+upgrade:
+	$(GO) get github.com/whatap/go-api
+
 	
 clean :
 	rm -rf $(OUTPUT)/http_client

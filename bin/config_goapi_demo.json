@@ -141,23 +141,6 @@
             ,{"Url":"http://127.0.0.1:8094/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8094/upload", "Method":"POST", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "ContentType":"multipart/form-data","Delay":300}
             
-            ,{"Title":"gormv1", "Url":"http://127.0.0.1:8095/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8095/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            
-            ,{"Title":"gormv2", "Url":"http://127.0.0.1:8096/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8096/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             
             
             ,{"Title":"Redigo", "Url":"http://127.0.0.1:8097/SetAndGetWithPool", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
@@ -214,5 +197,24 @@
             ,{"Url":"http://127.0.0.1:8103/deployments/rum-ote", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
              
         ]
+        ,"Actions_etc":[
+        		{"Title":"gormv1", "Url":"http://127.0.0.1:8095/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8095/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            
+            ,{"Title":"gormv2", "Url":"http://127.0.0.1:8096/WhatapDriverTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/InsertAndDelete", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/InsertAndUpdate", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/Select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/SelectWithContext", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DeleteAll", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DBTxTest", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+            ,{"Url":"http://127.0.0.1:8096/DBTxTestMulti", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
+         ] 
 }
 

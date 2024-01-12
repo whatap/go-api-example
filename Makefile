@@ -112,7 +112,45 @@ upgrade:
 	make -C k8s.io/client-go/kubernetes upgrade
 	#make -C github.com/aws upgrade
 	#make -C github.com/mongodb/mongo-go-driver upgrade
-		
+
+upgrade_go_api:
+	make -C database/sql upgrade_go_api
+	make -C net/http upgrade_go_api
+	make -C google.golang.org/grpc upgrade_go_api
+	make -C github.com/gin-gonic/gin upgrade_go_api
+	make -C github.com/gorilla/mux upgrade_go_api
+	make -C github.com/labstack/echo upgrade_go_api
+	make -C github.com/go-chi/chi upgrade_go_api
+	make -C github.com/valyala/fasthttp upgrade_go_api
+	make -C github.com/gofiber/fiber upgrade_go_api
+	make -C github.com/go-gorm/gorm upgrade_go_api
+	make -C github.com/gomodule/redigo upgrade_go_api 
+	make -C github.com/jinzhu/gorm upgrade_go_api 
+	make -C github.com/Shopify/sarama upgrade_go_api
+	make -C k8s.io/client-go/kubernetes upgrade_go_api
+	#make -C github.com/aws upgrade_go_api
+	#make -C github.com/mongodb/mongo-go-driver upgrade_go_api
+	
+	
+upgrade_golib:
+	make -C database/sql upgrade_golib 
+	make -C net/http upgrade_golib
+	make -C google.golang.org/grpc upgrade_golib
+	make -C github.com/gin-gonic/gin upgrade_golib
+	make -C github.com/gorilla/mux upgrade_golib
+	make -C github.com/labstack/echo upgrade_golib
+	make -C github.com/go-chi/chi upgrade_golib
+	make -C github.com/valyala/fasthttp upgrade_golib
+	make -C github.com/gofiber/fiber upgrade_golib
+	make -C github.com/go-gorm/gorm upgrade_golib
+	make -C github.com/gomodule/redigo upgrade_golib 
+	make -C github.com/jinzhu/gorm upgrade_golib 
+	make -C github.com/Shopify/sarama upgrade_golib
+	make -C k8s.io/client-go/kubernetes upgrade_golib
+	#make -C github.com/aws upgrade_golib
+	#make -C github.com/mongodb/mongo-go-driver upgrade_golib
+	
+
 clean:
 	make -C database/sql clean 
 	make -C net/http clean

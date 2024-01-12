@@ -728,6 +728,55 @@ func main() {
 			return
 		}
 
+		if rows, err := serviceDB.Query(query); err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				err := rows.Scan(&id, &subject)
+				if err != nil {
+					break
+				}
+				fmt.Println(id, subject)
+				buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
+			}
+		} else {
+			fmt.Println("Error db.QueryContext ", err)
+			return
+		}
+
+		buffer.WriteString("DB Statas <hr/>")
+		buffer.WriteString(fmt.Sprintln(serviceDB.Stats()))
+		_, _ = w.Write(buffer.Bytes())
+
+		fmt.Println("Response -", r.Response)
+	}))
+
+	http.HandleFunc("/service/gid", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
+		var buffer bytes.Buffer
+		w.Header().Add("Content-Type", "text/html")
+
+		// ctx := r.Context()
+		fmt.Println("Request -", r)
+		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+		fmt.Println("GID=", trace.GetGID())
+		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", trace.GetGID()))
+
+		var id int
+		var subject string
+		query := "select id, subject from tbl_faq limit 10"
+		if rows, err := serviceDB.Query(query); err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				err := rows.Scan(&id, &subject)
+				if err != nil {
+					break
+				}
+				fmt.Println(id, subject)
+				buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
+			}
+		} else {
+			fmt.Println("Error db.QueryContext ", err)
+		}
+
 		buffer.WriteString("DB Statas <hr/>")
 		buffer.WriteString(fmt.Sprintln(serviceDB.Stats()))
 		_, _ = w.Write(buffer.Bytes())

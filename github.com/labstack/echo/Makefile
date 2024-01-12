@@ -25,7 +25,15 @@ build:
 	cp -R $(WHATAP_CONF) $(OUTPUT)/echov4/
 	
 upgrade:
-	$(GO) get github.com/whatap/go-api
+	$(GO) get github.com/whatap/go-api@latest
+	$(GO) get github.com/whatap/golib@latest
+	
+upgrade_go_api:
+	$(GO) get github.com/whatap/go-api@latest
+
+upgrade_goblib:
+	$(GO) get github.com/whatap/golib@latest
+
 	
 clean :
 	rm -rf $(OUTPUT)/echo

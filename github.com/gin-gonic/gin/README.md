@@ -13,10 +13,10 @@ Use 함수를 통해 미들웨어를 설정합니다.
 
 ```
 import (
-    "github.com/go-gonic/gin"
+    "github.com/gin-gonic/gin"
     
     "github.com/whatap/go-api/trace"
-    "github.com/whatap/go-api/instrumentation/github.com/go-gonic/gin/whatapgin"
+    "github.com/whatap/go-api/instrumentation/github.com/gin-gonic/gin/whatapgin"
 )
 
 func main() {

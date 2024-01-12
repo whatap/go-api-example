@@ -26,7 +26,15 @@ build:
 	cp -R $(OUTPUT)/http_server $(OUTPUT)/http_server1
 
 upgrade:
-	$(GO) get github.com/whatap/go-api
+	$(GO) get github.com/whatap/go-api@latest
+	$(GO) get github.com/whatap/golib@latest
+
+upgrade_go_api:
+	$(GO) get github.com/whatap/go-api@latest
+
+upgrade_goblib:
+	$(GO) get github.com/whatap/golib@latest
+	
 
 	
 clean :

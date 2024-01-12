@@ -28,7 +28,15 @@ build:
 	cp -R $(OUTPUT)/grpc_server $(OUTPUT)/grpc_server2
 	
 upgrade:
-	$(GO) get github.com/whatap/go-api
+	$(GO) get github.com/whatap/go-api@latest
+	$(GO) get github.com/whatap/golib@latest
+
+upgrade_go_api:
+	$(GO) get github.com/whatap/go-api@latest
+
+upgrade_goblib:
+	$(GO) get github.com/whatap/golib@latest
+	
 
 
 clean :

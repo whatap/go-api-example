@@ -3,7 +3,7 @@ module github.com/whatap/go-api-example/google.golang.org/grpc
 go 1.18
 
 require (
-	github.com/whatap/go-api v0.2.4
+	github.com/whatap/go-api v0.3.3
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 )

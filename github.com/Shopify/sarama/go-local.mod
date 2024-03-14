@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/Shopify/sarama v1.37.2
-	github.com/whatap/go-api v0.2.4
+	github.com/whatap/go-api v0.3.3
 )
 
 require (

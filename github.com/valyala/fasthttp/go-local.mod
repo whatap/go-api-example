@@ -6,7 +6,7 @@ require (
 	github.com/fasthttp/router v1.4.14
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/valyala/fasthttp v1.43.0
-	github.com/whatap/go-api v0.2.4
+	github.com/whatap/go-api v0.3.3
 )
 
 require (

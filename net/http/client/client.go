@@ -150,14 +150,14 @@ func main() {
 
 	callUrl = "http://localhost:8081/httpc"
 	httpcCtx, _ = httpc.Start(ctx, callUrl)
-	if statusCode, err := httpWithRequest("GET", callUrl, "body", httpc.GetMTrace(httpcCtx)); err == nil {
+	if statusCode, err := httpWithRequest("GET", callUrl, "body", trace.GetMTrace(ctx)); err == nil {
 		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
 		httpc.End(httpcCtx, -1, "", err)
 	}
 
 	httpcCtx, _ = httpc.Start(ctx, callUrl)
-	if statusCode, err := httpWithRequest("POST", callUrl, "body", httpc.GetMTrace(httpcCtx)); err == nil {
+	if statusCode, err := httpWithRequest("POST", callUrl, "body", trace.GetMTrace(ctx)); err == nil {
 		httpc.End(httpcCtx, statusCode, "", nil)
 	} else {
 		httpc.End(httpcCtx, -1, "", err)

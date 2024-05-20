@@ -1,10 +1,10 @@
-GO=/usr/local/go/bin/go
+GO=go
 BIN=../../bin
 OUTPUT=$(BIN)/app
 TEMPLATE=$(BIN)/templates
 WHATAP_CONF=$(BIN)/whatap.conf
 
-all: mod_tidy mod_download build test
+all: mod_tidy mod_download build test copy_env
 
 mod_tidy:
 	$(GO) mod tidy
@@ -17,10 +17,12 @@ test:   #compile warning 제거후 사용 가능
 
 build:
 	$(GO) build -o $(OUTPUT)/grpc_client/grpc_client client/client.go
+	$(GO) build -o $(OUTPUT)/grpc_server/grpc_server server/server.go
+	
+copy_env:
 	cp -R $(TEMPLATE) $(OUTPUT)/grpc_client/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/grpc_client/
 	
-	$(GO) build -o $(OUTPUT)/grpc_server/grpc_server server/server.go
 	cp -R $(TEMPLATE) $(OUTPUT)/grpc_server/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/grpc_server/
 	
@@ -34,7 +36,7 @@ upgrade:
 upgrade_go_api:
 	$(GO) get github.com/whatap/go-api@latest
 
-upgrade_goblib:
+upgrade_golib:
 	$(GO) get github.com/whatap/golib@latest
 	
 

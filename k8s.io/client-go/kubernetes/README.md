@@ -1,6 +1,7 @@
-#  k8s.io/client-go/kubernetes
+# k8s.io/client-go/kubernetes
 
-restclient.Config 의 WrapTransport 함수를 whatapkubernetes.WrapRoundTripper()를 통해서 설정합니다. 
+It configures the WrapTransport function of restclient.Config through whatapkubernetes.WrapRoundTripper().
+
 ```
 import(
 	"github.com/whatap/go-api/instrumentation/k8s.io/client-go/kubernetes/whatapkubernetes"
@@ -26,4 +27,3 @@ func main() {
 	...	
 }
 ```
-

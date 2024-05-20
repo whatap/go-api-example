@@ -1,8 +1,9 @@
 # Redigo(https://github.com/gomodule/redigo)
-redigo 프레임워크를 통해 redis에 전달되는 명령을 추적합니다.
-redis.Dial 대신에 whatapredigo.DialContext를 함수를 사용합니다.
-전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.
-trace.Start()를 통해 TraceCtx는 생성됩니다.
+
+It traces the commands delivered to redis through the redigo framework.
+The whatapredigo.DialContext function is used instead of redis.Dial.
+The context to deliver must include the whatap TraceCtx inside.
+TreaceCtx is created through trace.Start().
 
 ```
 

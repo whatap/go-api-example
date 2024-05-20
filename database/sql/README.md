@@ -1,8 +1,7 @@
+# General tracing
 
-# 일반적인 추적
-
-DB Connection 추적은 whatapsql.StartOpen(), whatapsql.End() 함수로 추적합니다. 
-쿼리 실행에 대한 추적은 whatap.sql.Start(), whatapsql.End() 함수로 추적합니다. 
+The DB connection tracing is made using the whatapsql.StartOpen(), whatapsql.End() function.
+The query execution tracing is made using the whatap.sql.Start(), whatapsql.End() function.
 
 ```
 func Start(ctx context.Context, dbhost, sql string) (*SqlCtx, error) 
@@ -35,7 +34,7 @@ func main() {
 	}
 	defer db.Close()
 	
-	// 복수 Row를 갖는 SQL 쿼리
+	// SQL query with multiple rows
 	var id int
 	var subject string
 	var query = "select id, subject from tbl_faq limit 10"
@@ -48,7 +47,7 @@ func main() {
 		fmt.Println("Error db.QueryContext ", err)
 		return
 	}
-	defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+	defer rows.Close() //Be sure to close it (delayed closing).
 	
 	for rows.Next() {
 		err := rows.Scan(&id, &subject)
@@ -61,13 +60,13 @@ func main() {
 }        
 ```
 
-## whatapsql의 Driver를 통해서 추적
+## Tracing through a whatap driver
 
-database/sql 패키지의 sql.Open 함수 대신 whatapsql.OpenContext 함수를 사용합니다.  
-PrepareContext, QueryContext, ExecContext 등 context를 전달하는 함수를 사용하기를 권장합니다. 
+It uses the whatapsql.OpenContext function instead of the sql.Open function in the database/sql package.\
+It is recommended to use the function that delivers contexts such as PrepareContext, QueryContext, and ExecContext.
 
-전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.  
-trace.Start()를 통해 TraceCtx는 생성됩니다.
+The context to deliver must include the whatap TraceCtx inside.\
+TreaceCtx is created through trace.Start().
 
 ```
 import (
@@ -82,11 +81,11 @@ func main() {
 	trace.Init(config)
 	defer trace.Shutdown()
 	
-	// whataphttp.Func 내부에서 whatap TraceCtx를 생성합니다. 
+	// whatap TraceCtx is created inside whataphttp.Func. 
 	http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		
-		// Use WhaTap Driver. whatap의 TraceCtx가 있는 context 를 전달합니다. 
+		// Use the WhaTap Driver. It delivers the context with the whatap's TraceCtx. 
 		db, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
 		if err != nil {
 		fmt.Println("Error whatapsql.Open ", err)
@@ -97,7 +96,7 @@ func main() {
 		... 
 		query := "select id, subject from tbl_faq limit 10"
 		
-		// whatap TraceCtx가 있는 context 를 전달합니다. 
+		// It delivers the context with whatap TraceCtx. 
 		if rows, err := db.QueryContext(ctx, query); err == nil {
 		...
 		}
@@ -107,7 +106,6 @@ func main() {
 }
 ```
 
-|옵션명| 기본값| 테이터타입| 설명|
-|----|----|----|----|
-|go.sql_profile_enabled|true|bool|database/sql 정보 수집여부를 설정합니다. |
-
+| Option Name                                                                      | Default Value | Data Type | Description                                                                    |
+| -------------------------------------------------------------------------------- | ------------- | --------- | ------------------------------------------------------------------------------ |
+| go.sql_profile_enabled | true          | bool      | It determines whether or not to collect the database/sql data. |

@@ -1,22 +1,22 @@
 # Sarama(https://github.com/Shopify/sarama)
 
-sarama 프레임워크를 통해서 처리되는 kafka produce, consume 이벤트를 추적합니다.
-sarama config에 정의된 interceptor를 설정합니다.
+It traces the kafka produce and consume events processed through the sarama framework.
+It configures the interceptor defined in the sarama config.
 
 ```
 	brokers := []string{"192.168.200.65:9092"} //config kafka broker IP/Port
 
 	interceptor := whatapsarama.Interceptor{Brokers: brokers}
 
-	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Async에만 적용됨
+	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Applied only in Async.
 	config.Consumer.Interceptors = []sarama.ConsumerInterceptor{&interceptor}
 
 ```
 
-# async produce 추적
+# Tracing the async produce
 
-비동기로 처리되는 produce에 대해서는 Interceptor를 통해 처리됩니다.
-이때 ProduceMessage에 Trace Context 관련 정보를 주면 Multi Transaction으로 연결됩니다.
+Asynchronous produce events are handled through the Interceptor.
+At this time, if the trace context-related information is delivered to ProduceMessage, it connects to Multi Transaction.
 
 ```
 import (
@@ -34,7 +34,7 @@ func main() {
 
 	interceptor := whatapsarama.Interceptor{Brokers: brokers}
 
-	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Async에만 적용됨
+	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Applied only in Async.
 	config.Consumer.Interceptors = []sarama.ConsumerInterceptor{&interceptor}
 
 
@@ -76,9 +76,9 @@ func main() {
 
 ```
 
-# consume 추적
+# Tracing consume
 
-consume도 Interceptor를 통해 추적되며 Produce 당시 정의된 Message 기준으로 Multi Transaction으로 연결됩니다.
+Consume is traced through the interceptor and it connects to Multi Transaction based on the message defined for Produce.
 
 ```
 

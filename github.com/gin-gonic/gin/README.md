@@ -1,7 +1,7 @@
 # github.com/gin-gonic/gin(https://github.com/gin-gonic/gin)
 
-gin 프레임워크의 웹 트랜잭션을 추적합니다.  
-Use 함수를 통해 미들웨어를 설정합니다.
+Web transactions are traced in the gin framework.\
+It sets the middleware through the Use function.
 
 ```
     r := gin.Default()
@@ -9,7 +9,6 @@ Use 함수를 통해 미들웨어를 설정합니다.
     // Set the whatap
     r.Use(whatapgin.Middleware())
 ```
-
 
 ```
 import (

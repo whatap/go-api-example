@@ -1,13 +1,12 @@
 # Gormv2(https://github.com/go-gorm/gorm)
 
-Grom 프레임워크를 통해 처리되는 DB Connection 및 SQL을 추적합니다.
+It traces DB connections and SQLs that are processed through the Grom framework.
 
-# 일반적인 추적
+# General tracing
 
-gorm.Open 대신에 whatapgorm.OpenWithContext 함수를 사용합니다.
-전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.
-trace.Start()를 통해 TraceCtx는 생성됩니다.
-
+The whatapgorm.OpenWithContext function is used instead of gorm.Open.
+The context to deliver must include the whatap TraceCtx inside.
+TreaceCtx is created through trace.Start().
 
 ```
 
@@ -31,7 +30,7 @@ func main() {
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("Db connection failed.")
 		}
 
 		for i := 0; i < 100; i++ {
@@ -48,13 +47,10 @@ func main() {
 
 ```
 
+# Tracing through the whatapsql driver
 
-# whatapsql driver를 통해 추적
-
-
-whatapsql의 OpenContext 함수를 통해 만들어진 Connection을 통해 추적합니다.
-gorm Open시 위에서 만들어진 만들어진 Connection을 전달하여 사용합니다.
-
+It traces through the connection created via the OpenContext function of whatapsql.
+It is used by delivering the created connection upon the gorm Open.
 
 ```
 
@@ -79,7 +75,7 @@ func main() {
 		dbConn, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
 		db, err := gorm.Open(mysql.New(mysql.Config{Conn: dbConn}), &gorm.Config{})
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("DB connection failed.")
 		}
 		for i := 0; i < 100; i++ {
 			db.Create(&Product{Code: i, Price: i * 100})

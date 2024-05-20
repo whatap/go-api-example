@@ -1,10 +1,10 @@
-GO=/usr/local/go/bin/go
+GO=go
 BIN=../../bin
 OUTPUT=$(BIN)/app
 TEMPLATE=$(BIN)/templates
 WHATAP_CONF=$(BIN)/whatap.conf
 
-all: mod_tidy mod_download build test
+all: mod_tidy mod_download build test copy_env
 
 mod_tidy:
 	$(GO) mod tidy
@@ -14,21 +14,23 @@ mod_download:
 
 test:   #compile warning 제거후 사용 가능
 	$(GO) test ./... -cover
-
+	
 build:
 	$(GO) build -o $(OUTPUT)/sql/sql sql.go
+	$(GO) build -o $(OUTPUT)/mssql/mssql mssql/mssql.go
+	$(GO) build -o $(OUTPUT)/mysql/mysql mysql/mysql.go
+	$(GO) build -o $(OUTPUT)/pgsql/pgsql pgsql/pgsql.go
+
+copy_env:
 	cp -R $(TEMPLATE) $(OUTPUT)/sql/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/sql/
 	
-	$(GO) build -o $(OUTPUT)/mssql/mssql mssql/mssql.go
 	cp -R $(TEMPLATE) $(OUTPUT)/mssql/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/mssql/
 	
-	$(GO) build -o $(OUTPUT)/mysql/mysql mysql/mysql.go
 	cp -R $(TEMPLATE) $(OUTPUT)/mysql/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/mysql/
 	
-	$(GO) build -o $(OUTPUT)/pgsql/pgsql pgsql/pgsql.go
 	cp -R $(TEMPLATE) $(OUTPUT)/pgsql/
 	cp -R $(WHATAP_CONF) $(OUTPUT)/pgsql/
 	
@@ -39,7 +41,7 @@ upgrade:
 upgrade_go_api:
 	$(GO) get github.com/whatap/go-api@latest
 
-upgrade_goblib:
+upgrade_golib:
 	$(GO) get github.com/whatap/golib@latest
 
 	

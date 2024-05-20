@@ -1,4 +1,4 @@
-GO=/usr/local/go/bin/go
+GO=go
 
 all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes 
 #all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes aws mongo
@@ -11,69 +11,105 @@ mod_tidy:
 	$(GO) mod tidy
 
 database_sql:
-	#echo "database/sql"
+#	echo "database/sql"
 	make -C database/sql 
 
 http:
-	#echo "net/http"
+#	echo "net/http"
 	make -C net/http
 
 grpc:
-	#echo "gooogle.golang.org/grpc"
+#	echo "gooogle.golang.org/grpc"
 	make -C google.golang.org/grpc
 
 gin:
-	#echo "gin-gonic/gin"
+#	echo "gin-gonic/gin"
 	make -C github.com/gin-gonic/gin
 
 gorilla:
-	#echo "gorilla/mux"
+#	echo "gorilla/mux"
 	make -C github.com/gorilla/mux
 
 echo:
-	#echo "labstack/echo"
+#	echo "labstack/echo"
 	make -C github.com/labstack/echo
 
 chi:
-	#echo "go-chi/chi"
+#	echo "go-chi/chi"
 	make -C github.com/go-chi/chi
 
 fasthttp:
-	#echo "valyala/fasthttp"
+#	echo "valyala/fasthttp"
 	make -C github.com/valyala/fasthttp
 
 fiber:
-	#echo "goviber/fiber"
+#	echo "goviber/fiber"
 	make -C github.com/gofiber/fiber
 
 
 gormv2:
-	#echo "go-gorm/gorm"
+#	echo "go-gorm/gorm"
 	make -C github.com/go-gorm/gorm
 
 gormv1:
-	#echo "jinzhu/gorm"
+#	echo "jinzhu/gorm"
 	make -C github.com/jinzhu/gorm
 
 redigo:
-	#echo "gomodule/redigo"
+#	echo "gomodule/redigo"
 	make -C github.com/gomodule/redigo
 
 sarama:
-	#echo "Shopify/sarama"
+#	echo "Shopify/sarama"
 	make -C github.com/Shopify/sarama
 
 mongo:
 	make -C github.com/mongodb/mongo-go-driver
 	
 aws:
-	#echo "aws/aws-sdk-go-v2"
+#	echo "aws/aws-sdk-go-v2"
 	make -C github.com/aws
 
 kubernetes:
-	#echo "k8s.io/client-go/kubernetes"
+#	echo "k8s.io/client-go/kubernetes"
 	make -C k8s.io/client-go/kubernetes
-	
+
+build:
+	make -C database/sql build 
+	make -C net/http build
+	make -C google.golang.org/grpc build
+	make -C github.com/gin-gonic/gin build
+	make -C github.com/gorilla/mux build
+	make -C github.com/labstack/echo build
+	make -C github.com/go-chi/chi build
+	make -C github.com/valyala/fasthttp build
+	make -C github.com/gofiber/fiber build
+	make -C github.com/go-gorm/gorm build
+	make -C github.com/gomodule/redigo build 
+	make -C github.com/jinzhu/gorm build 
+	make -C github.com/Shopify/sarama build
+	make -C k8s.io/client-go/kubernetes build
+#	make -C github.com/aws build
+#	make -C github.com/mongodb/mongo-go-driver build
+
+copy_env:
+	make -C database/sql copy_env 
+	make -C net/http copy_env
+	make -C google.golang.org/grpc copy_env
+	make -C github.com/gin-gonic/gin copy_env
+	make -C github.com/gorilla/mux copy_env
+	make -C github.com/labstack/echo copy_env
+	make -C github.com/go-chi/chi copy_env
+	make -C github.com/valyala/fasthttp copy_env
+	make -C github.com/gofiber/fiber copy_env
+	make -C github.com/go-gorm/gorm copy_env
+	make -C github.com/gomodule/redigo copy_env 
+	make -C github.com/jinzhu/gorm copy_env 
+	make -C github.com/Shopify/sarama copy_env
+	make -C k8s.io/client-go/kubernetes copy_env
+#	make -C github.com/aws copy_env
+#	make -C github.com/mongodb/mongo-go-driver copy_env
+
 local:
 	cp ./database/sql/go-local.mod ./database/sql/go.mod
 	cp ./net/http/go-local.mod ./net/http/go.mod
@@ -92,8 +128,8 @@ local:
 	cp ./github.com/Shopify/sarama/go-local.mod ./github.com/Shopify/sarama/go.mod
 
 	cp ./k8s.io/client-go/kubernetes/go-local.mod ./k8s.io/client-go/kubernetes/go.mod
-	#cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
-	#cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
+#	cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
+#	cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
 	
 upgrade:
 	make -C database/sql upgrade 
@@ -110,8 +146,8 @@ upgrade:
 	make -C github.com/jinzhu/gorm upgrade 
 	make -C github.com/Shopify/sarama upgrade
 	make -C k8s.io/client-go/kubernetes upgrade
-	#make -C github.com/aws upgrade
-	#make -C github.com/mongodb/mongo-go-driver upgrade
+#	make -C github.com/aws upgrade
+#	make -C github.com/mongodb/mongo-go-driver upgrade
 
 upgrade_go_api:
 	make -C database/sql upgrade_go_api
@@ -128,8 +164,8 @@ upgrade_go_api:
 	make -C github.com/jinzhu/gorm upgrade_go_api 
 	make -C github.com/Shopify/sarama upgrade_go_api
 	make -C k8s.io/client-go/kubernetes upgrade_go_api
-	#make -C github.com/aws upgrade_go_api
-	#make -C github.com/mongodb/mongo-go-driver upgrade_go_api
+#	make -C github.com/aws upgrade_go_api
+#	make -C github.com/mongodb/mongo-go-driver upgrade_go_api
 	
 	
 upgrade_golib:
@@ -147,9 +183,10 @@ upgrade_golib:
 	make -C github.com/jinzhu/gorm upgrade_golib 
 	make -C github.com/Shopify/sarama upgrade_golib
 	make -C k8s.io/client-go/kubernetes upgrade_golib
-	#make -C github.com/aws upgrade_golib
-	#make -C github.com/mongodb/mongo-go-driver upgrade_golib
+#	make -C github.com/aws upgrade_golib
+#	make -C github.com/mongodb/mongo-go-driver upgrade_golib
 	
+
 
 clean:
 	make -C database/sql clean 
@@ -166,8 +203,8 @@ clean:
 	make -C github.com/jinzhu/gorm clean 
 	make -C github.com/Shopify/sarama clean
 	make -C k8s.io/client-go/kubernetes clean
-	#make -C github.com/aws clean
-	#make -C github.com/mongodb/mongo-go-driver clean
+#	make -C github.com/aws clean
+#	make -C github.com/mongodb/mongo-go-driver clean
 	
 
 clean_go:
@@ -191,6 +228,6 @@ clean_go:
 	make -C github.com/jinzhu/gorm clean_go 
 	make -C github.com/Shopify/sarama clean_go
 	make -C k8s.io/client-go/kubernetes clean_go
-	#make -C github.com/aws clean_go
-	#make -C github.com/mongodb/mongo-go-driver clean_go
+#	make -C github.com/aws clean_go
+#	make -C github.com/mongodb/mongo-go-driver clean_go
 	

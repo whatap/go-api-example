@@ -1,14 +1,15 @@
-#  net/http
+# net/http
 
 ## Server
 
-### 웹 트랜잭션 추적
-http.Hand, http.HandleFunc 을 감싸는 Wrapping 함수를 사용합니다. 
+### Tracing web transactions
 
-whataphttp.HandlerFunc(), whataphttp.Func() 
+It uses the Wrapping function that wraps http.Handle and http.HandleFunc.
 
-내부에서 whatap traceCtx 를 생성하여 추가한 context 를 request에 설정합니다. 
-이후 context 는 r.Context()를 사용합니다.
+whataphttp.HandlerFunc(), whataphttp.Func()
+
+It internally creates a whatap traceCtx and then sets the added context to the request
+Afterwards, the context uses r.Context().
 
 ```
 // wrapping type of http.HanderFunc, example : http.Handle(pattern, http.HandlerFunc)
@@ -40,7 +41,6 @@ func Func(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWr
 }
 ```
 
-
 ```
 import (
 	"github.com/whatap/go-api/instrumentation/net/http/whataphttp"
@@ -68,7 +68,7 @@ func main(){
 
 ## Client
 
-httpc.Start(), httpc.End() 함수로 추적할 수 있습니다. 
+It can be traced using the httpc.Start(), httpc.End() function.
 
 ```
 func Start(ctx context.Context, url string) (*HttpcCtx, error)
@@ -101,13 +101,12 @@ func main(){
 }
 ```
 
+### RoundTripper
 
-### RoundTripper 
+You can set the RoundTripper middleware to trace HTTP calls.
 
-RoundTripper 미들웨어를 설정하여 http call을 추적할 수 있습니다. 
-
-전달하는 context는 내부에 whatap TraceCtx를 포함해야 합니다.  
-trace.Start()를 통해 TraceCtx는 생성됩니다.
+The context to deliver must include the whatap TraceCtx inside.\
+TreaceCtx is created through trace.Start().
 
 ```
 import (

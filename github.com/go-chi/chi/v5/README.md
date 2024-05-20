@@ -1,15 +1,14 @@
 # chi(https://github.com/go-chi/chi)
 
-chi 프레임워크의 웹 트랜잭션을 추적합니다.
+Web transactions are traced in the chi framework.
 
-Use함수를 통해 미들웨어를 설정합니다.
+It sets the middleware through the Use function.
 
 ```
 r := chi.NewRouter()
 r.Use(middleware.Logger)
 r.Use(whatapchi.Middleware)
 ```
-
 
 ```
 import (

@@ -1,7 +1,7 @@
 # fasthttp(https://github.com/valyala/fasthttp)
 
-fasthttp 핸들러 함수를 whatapfasthttp.Func()로 wrapping 합니다. 
-내부에서 fasthttp request, response 관련된 정보를 수집합니다. 
+It wraps the fasthttp handler function with whatapfasthttp.Func().
+It collects the data related to the fasthttp request and response internally.
 
 ```
 import(

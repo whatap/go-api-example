@@ -23,7 +23,6 @@ import (
 	"github.com/whatap/go-api/instrumentation/github.com/labstack/echo/v4/whatapecho"
 	"github.com/whatap/go-api/method"
 	"github.com/whatap/go-api/trace"
-	"github.com/whatap/golib/util/logo"
 )
 
 func getUser(ctx context.Context) {
@@ -112,7 +111,6 @@ func main() {
 	IsWhatap := *setWhatapPtr
 
 	if IsWhatap {
-		logo.Print2("golang", "v0.2.0")
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
 		trace.Init(config)

@@ -23,11 +23,20 @@ func main() {
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	dataSourcePtr := flag.String("ds", "phpdemo3:9092", " dataSourceName ")
-	flag.Parse()
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
 
-	udpPort := *udpPortPtr
+	flag.Parse()
 	port := *portPtr
+	udpPort := *udpPortPtr
 	dataSource := *dataSourcePtr
+	IsWhatap := *setWhatapPtr
+
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
+	defer trace.Shutdown()
 
 	config := sarama.NewConfig()
 	config.Producer.Retry.Max = 5
@@ -42,11 +51,6 @@ func main() {
 
 	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Async에만 적용됨
 	config.Consumer.Interceptors = []sarama.ConsumerInterceptor{&interceptor}
-
-	whatapConfig := make(map[string]string)
-	whatapConfig["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	trace.Init(whatapConfig)
-	defer trace.Shutdown()
 
 	producer, err := sarama.NewAsyncProducer(brokers, config)
 	consumerOffset := sarama.OffsetOldest

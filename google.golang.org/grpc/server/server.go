@@ -73,20 +73,26 @@ func (s *NoticeServer) Health(stream pb.ServiceNotice_HealthServer) error {
 }
 
 func main() {
-	port := flag.Int("p", 8082, "grpc port. default 8082  ")
-	udpPort := flag.Int("up", 6600, "whatap agent udp port")
+	portPtr := flag.Int("p", 8082, "grpc port. default 8082  ")
+	udpPortPtr := flag.Int("up", 6600, "whatap agent udp port")
 	grpcEnable := flag.Bool("use_client", false, "use connect to other grpc server")
 	grpcHost := flag.String("gh", "localhost", "grpc host. default localhost")
 	grpcPort := flag.Int("gp", 8084, "grpc port. defalt 8082 ")
-	flag.Parse()
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
 
-	// Init WhaTap Trace
-	config := make(map[string]string)
-	config["net_udp_port"] = fmt.Sprintf("%d", *udpPort)
-	trace.Init(config)
+	flag.Parse()
+	port := *portPtr
+	udpPort := *udpPortPtr
+	IsWhatap := *setWhatapPtr
+
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen %v", err)
 	}
@@ -114,7 +120,7 @@ func main() {
 	}
 	pb.RegisterServiceNoticeServer(grpcServer, ns)
 
-	log.Println("Open grpc server :", *port, ", Whatap udp port:", *udpPort)
+	log.Println("Open grpc server :", port, ", Whatap udp port:", udpPort)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

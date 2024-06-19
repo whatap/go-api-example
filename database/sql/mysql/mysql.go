@@ -32,14 +32,19 @@ func main() {
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo:3306)/doremimaker", " dataSourceName ")
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
+
 	flag.Parse()
 	port := *portPtr
 	udpPort := *udpPortPtr
 	dataSource := *dataSourcePtr
+	IsWhatap := *setWhatapPtr
 
-	config := make(map[string]string)
-	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	trace.Init(config)
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
 	serviceDB, err := whatapsql.OpenContext(context.Background(), MYSQL_DRIVER_NAME, dataSource)

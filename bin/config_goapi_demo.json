@@ -169,7 +169,6 @@
             ,{"Url":"http://127.0.0.1:8100/httpc", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8100/httpc/unknown", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8100/sql/select", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
-            ,{"Url":"http://127.0.0.1:8100/panic", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8100/input", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8100/inputFile", "Method":"GET", "Param":"", "Charset":"", "Delay":300}
             ,{"Url":"http://127.0.0.1:8100/upload", "Method":"POST", "Param":"","Parameters":[{"K":"file", "V":"./file.txt", "Type":"file"},{"K":"aaa", "V":"bbb", "Type":"text"}, {"K":"ccc", "V":"ccc", "Type":"text"}], "Charset":"", "ContentType":"multipart/form-data","Delay":300}

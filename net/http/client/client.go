@@ -117,16 +117,19 @@ func getKV(str, div string) (string, string) {
 }
 func main() {
 	udpPortPtr := flag.Int("up", 6600, "part ")
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
+
 	flag.Parse()
 	udpPort := *udpPortPtr
+	IsWhatap := *setWhatapPtr
 
-	config := make(map[string]string)
-	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	config["mtrace_enabled"] = "true"
-	config["mtrace_rate"] = "100"
-
-	trace.Init(config)
-	//It must be executed before closing the app.
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		config["mtrace_enabled"] = "true"
+		config["mtrace_rate"] = "100"
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
 	ctx, _ := trace.Start(context.Background(), "Http call")

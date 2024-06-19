@@ -31,15 +31,19 @@ func main() {
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
 	portPtr := flag.Int("p", 8080, "web port. default 8080  ")
 	dataSourcePtr := flag.String("ds", "doremimaker:doremimaker@tcp(phpdemo2:3306)/doremimaker", " dataSourceName ")
-	flag.Parse()
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
 
+	flag.Parse()
+	port := *portPtr
 	udpPort := *udpPortPtr
 	dataSource := *dataSourcePtr
-	port := *portPtr
+	IsWhatap := *setWhatapPtr
 
-	whatapConfig := make(map[string]string)
-	whatapConfig["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	trace.Init(whatapConfig)
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
 	templatePath := "templates/github.com/jinzhu/index.html"

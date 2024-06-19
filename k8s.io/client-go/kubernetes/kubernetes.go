@@ -113,20 +113,23 @@ func main() {
 
 	portPtr := flag.Int("p", 8080, "web port. default 8080")
 	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600")
-	dataSourcePtr := flag.String("ds", "whatap:whatap1234!@tcp(localhost:3306)/whatap_demo", "dataSourceName")
+	// dataSourcePtr := flag.String("ds", "whatap:whatap1234!@tcp(localhost:3306)/whatap_demo", "dataSourceName")
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
+
 	flag.Parse()
+	port := *portPtr
+	udpPort := *udpPortPtr
+	// dataSource := *dataSourcePtr
+	IsWhatap := *setWhatapPtr
+
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
+	defer trace.Shutdown()
 
 	InitKubeConfig()
-
-	port, udpPort, _ := *portPtr, *udpPortPtr, *dataSourcePtr
-	// port, udpPort, dataSource := *portPtr, *udpPortPtr, *dataSourcePtr
-
-	// Whatap go
-	config := make(map[string]string)
-	config["net_udp_port"] = "127.0.0.1"
-	config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
-	trace.Init(config)
-	defer trace.Shutdown()
 
 	r := gin.Default()
 	r.Use(whatapgin.Middleware())

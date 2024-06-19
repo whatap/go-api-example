@@ -94,17 +94,23 @@ type HTMLData struct {
 }
 
 func main() {
-	port := flag.Int("p", 8083, "web port. default 8080  ")
+	portPtr := flag.Int("p", 8083, "web port. default 8080  ")
 	grpcHost := flag.String("gh", "localhost", "grpc host. default localhost")
 	grpcPort := flag.Int("gp", 8082, "grpc port. defalt 8082 ")
-	udpPort := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
+	udpPortPtr := flag.Int("up", 6600, "agent port(udp). defalt 6600 ")
+
+	setWhatapPtr := flag.Bool("whatap", false, "set whatap")
 
 	flag.Parse()
+	port := *portPtr
+	udpPort := *udpPortPtr
+	IsWhatap := *setWhatapPtr
 
-	// Init WhaTap Trace
-	config := make(map[string]string)
-	config["net_udp_port"] = fmt.Sprintf("%d", *udpPort)
-	trace.Init(config)
+	if IsWhatap {
+		config := make(map[string]string)
+		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
+		trace.Init(config)
+	}
 	defer trace.Shutdown()
 
 	// Set the whatap interceptor to grpc
@@ -336,8 +342,8 @@ func main() {
 		tp.Execute(w, data)
 	}))
 
-	log.Println("Start :", *port, ", Grpc port:", *grpcPort, ", Whatap Udp port:", *udpPort)
+	log.Println("Start :", port, ", Grpc port:", *grpcPort, ", Whatap Udp port:", udpPort)
 
-	_ = http.ListenAndServe(fmt.Sprintf(":%d", *port), mux)
+	_ = http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 
 }

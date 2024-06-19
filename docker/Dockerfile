@@ -11,9 +11,11 @@ RUN echo "whatap.server.host=1.1.1.1/2.2.2.2" >> /app/whatap.conf
 
 # Whatap/go-api library must be imported into the user application.
 WORKDIR /app
+ENV WHATAP_HOME /app
+
 RUN go mod tidy
 RUN go mod download -x
 RUN go build -o ./app app.go
 
 # Run whatap-agent and the user application together with the Docker execution command.
-CMD ['sh', '-c', '/etc/init.d/whatap-agent start && /app/app']
+CMD ['sh', '-c', '/usr/whatap/agent/whatap-agent start && /app/app']

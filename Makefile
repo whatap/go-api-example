@@ -1,6 +1,7 @@
 GO=go
 
-all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes 
+all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes
+#all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes sqlx
 #all: database_sql http grpc gin gorilla echo chi fasthttp fiber gormv2 gormv1 redigo sarama  kubernetes aws mongo
 #all: mod_tidy mod_download http database_sql grpc gin gorilla echo gormv2 gormv1 redigo sarama chi fasthttp fiber kubernetes aws mongo
 
@@ -74,6 +75,11 @@ kubernetes:
 #	echo "k8s.io/client-go/kubernetes"
 	make -C k8s.io/client-go/kubernetes
 
+sqlx:
+#	echo "k8s.io/client-go/kubernetes"
+	make -C github.com/jmoiron/sqlx
+
+
 build:
 	make -C database/sql build 
 	make -C net/http build
@@ -91,6 +97,7 @@ build:
 	make -C k8s.io/client-go/kubernetes build
 #	make -C github.com/aws build
 #	make -C github.com/mongodb/mongo-go-driver build
+	make -C github.com/jmoiron/sqlx build
 
 copy_env:
 	make -C database/sql copy_env 
@@ -109,6 +116,7 @@ copy_env:
 	make -C k8s.io/client-go/kubernetes copy_env
 #	make -C github.com/aws copy_env
 #	make -C github.com/mongodb/mongo-go-driver copy_env
+	make -C github.com/jmoiron/sqlx copy_env
 
 local:
 	cp ./database/sql/go-local.mod ./database/sql/go.mod
@@ -130,6 +138,7 @@ local:
 	cp ./k8s.io/client-go/kubernetes/go-local.mod ./k8s.io/client-go/kubernetes/go.mod
 #	cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
 #	cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
+	cp ./github.com/jmoiron/sqlx/go-local.mod ./github.com/jmoiron/sqlx/go.mod
 	
 upgrade:
 	make -C database/sql upgrade 
@@ -148,6 +157,7 @@ upgrade:
 	make -C k8s.io/client-go/kubernetes upgrade
 #	make -C github.com/aws upgrade
 #	make -C github.com/mongodb/mongo-go-driver upgrade
+	make -C github.com/jmoiron/sqlx upgrade
 
 upgrade_go_api:
 	make -C database/sql upgrade_go_api
@@ -166,6 +176,7 @@ upgrade_go_api:
 	make -C k8s.io/client-go/kubernetes upgrade_go_api
 #	make -C github.com/aws upgrade_go_api
 #	make -C github.com/mongodb/mongo-go-driver upgrade_go_api
+	make -C github.com/jmoiron/sqlx upgrade_go_api
 	
 	
 upgrade_golib:
@@ -185,7 +196,7 @@ upgrade_golib:
 	make -C k8s.io/client-go/kubernetes upgrade_golib
 #	make -C github.com/aws upgrade_golib
 #	make -C github.com/mongodb/mongo-go-driver upgrade_golib
-	
+	make -C github.com/jmoiron/sqlx upgrade_golib
 
 
 clean:
@@ -205,6 +216,7 @@ clean:
 	make -C k8s.io/client-go/kubernetes clean
 #	make -C github.com/aws clean
 #	make -C github.com/mongodb/mongo-go-driver clean
+	make -C github.com/jmoiron/sqlx clean
 	
 
 clean_go:
@@ -230,4 +242,5 @@ clean_go:
 	make -C k8s.io/client-go/kubernetes clean_go
 #	make -C github.com/aws clean_go
 #	make -C github.com/mongodb/mongo-go-driver clean_go
+	make -C github.com/jmoiron/sqlx clean_go
 	

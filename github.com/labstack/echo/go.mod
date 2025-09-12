@@ -7,6 +7,7 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/whatap/go-api v0.3.3
+	github.com/whatap/golib v0.0.21
 )
 
 require (
@@ -25,7 +26,6 @@ require (
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
-	github.com/whatap/golib v0.0.38 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
@@ -33,7 +33,3 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 )
-
-replace github.com/whatap/go-api => ../../../../go-api
-
-replace github.com/whatap/golib => ../../../../golib

@@ -86,8 +86,7 @@ func (s *Server) Start(port int, apiHost string, depth int) {
 		// use function trace.UpdateMtrace(http.Header)
 		// The headers received in the request are analyzed to generate the headers required for distributed tracing.
 		// Distributed tracing headers include W3C's traceparent header and Wattap's x-wtp-xxx.
-		_, traceCtx := trace.GetTraceContext(ctx)
-		trace.UpdateMtrace(traceCtx, r.Header)
+		trace.UpdateMtraceWithContext(ctx, r.Header)
 
 		// Get additional WhaTap headers .
 		wHeader := trace.GetMtrace(ctx)
@@ -142,8 +141,7 @@ func (s *Server) Start(port int, apiHost string, depth int) {
 		// use function trace.UpdateMtrace(http.Header)
 		// The headers received in the request are analyzed to generate the headers required for distributed tracing.
 		// Distributed tracing headers include W3C's traceparent header and Wattap's x-wtp-xxx.
-		ctx, traceCtx := trace.GetTraceContext(ctx)
-		trace.UpdateMtrace(traceCtx, r.Header)
+		trace.UpdateMtraceWithContext(ctx, r.Header)
 
 		// Get additional WhaTap headers.
 		wHeader := trace.GetMtrace(ctx)

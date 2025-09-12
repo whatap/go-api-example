@@ -1,13 +1,8 @@
-module github.com/whatap/go-api-example/github.com/go-chi/chi
+module github.com/whatap/go-api-example/distributed_tracing
 
 go 1.18
 
-require (
-	github.com/go-chi/chi v1.5.4
-	github.com/go-chi/chi/v5 v5.0.7
-	github.com/go-sql-driver/mysql v1.7.0
-	github.com/whatap/go-api v0.3.3
-)
+require github.com/whatap/go-api v0.4.5
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -23,7 +18,3 @@ require (
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )
-
-replace github.com/whatap/go-api => ../../../../go-api
-
-replace github.com/whatap/golib => ../../../../golib

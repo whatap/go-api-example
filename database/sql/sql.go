@@ -1,3 +1,35 @@
+// database/sql Manual Instrumentation Example
+//
+// This example demonstrates how to manually instrument database/sql applications
+// using WhaTap Go API's low-level SQL tracking functions.
+//
+// INSTRUMENTATION OVERVIEW:
+// This example shows TWO approaches to SQL tracking:
+//
+// METHOD 1: Manual whatapsql.Start/End (explicit control)
+//   - Call whatapsql.Start(ctx, dataSource, query) before SQL execution
+//   - Call whatapsql.End(sqlCtx, err) after SQL execution
+//   - Use StartWithParam() or StartWithParamArray() for parameter tracking
+//
+// METHOD 2: Use whatapsql.OpenContext() (recommended, automatic)
+//   - Replace sql.Open() with whatapsql.OpenContext()
+//   - All queries are automatically tracked
+//   - See other examples (gorilla/mux, gin, echo) for this approach
+//
+// FEATURES:
+// - Connection tracking via whatapsql.StartOpen/End
+// - Query tracking via whatapsql.Start/End
+// - Parameter tracking via whatapsql.StartWithParam
+// - Named parameter support via whatapsql.StartWithParamArray
+// - Transaction tracking (Begin, Commit, Rollback)
+// - Error tracking
+//
+// WHEN TO USE MANUAL TRACKING:
+// - When you need fine-grained control over SQL tracking
+// - When using connection pools with shared *sql.DB
+// - When you want to track specific queries only
+// - Legacy code where automatic instrumentation is difficult
+
 package main
 
 import (
@@ -40,6 +72,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -47,6 +84,11 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Global Database Connection (No Tracking)
+	// ============================================================
+	// This connection is opened at startup without HTTP context.
+	// Use manual tracking (whatapsql.Start/End) for queries.
 	serviceDB, err := sql.Open(MYSQL_DRIVER_NAME, dataSource)
 	if err != nil {
 		fmt.Println("Error service sql Open ", err)
@@ -70,6 +112,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 1: Query with Manual Tracking
+	// ============================================================
+	// Demonstrates manual SQL tracking using whatapsql.Start/End.
+	// Also shows connection tracking with whatapsql.StartOpen/End.
 	http.HandleFunc("/query", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -78,6 +125,7 @@ func main() {
 		fmt.Println("Request -", r)
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
+		// Track database connection opening
 		sqlCtx, _ := whatapsql.StartOpen(ctx, dataSource)
 		db, err := sql.Open(MYSQL_DRIVER_NAME, dataSource)
 		whatapsql.End(sqlCtx, err)
@@ -88,13 +136,17 @@ func main() {
 		}
 		defer db.Close()
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Track SQL query execution
 		var id int
 		var subject string
 		var query = "select id, subject from tbl_faq limit 10"
+
+		// Start SQL tracking
 		sqlCtx, _ = whatapsql.Start(ctx, dataSource, query)
 		rows, err := db.Query(query)
+		// End SQL tracking with error status
 		whatapsql.End(sqlCtx, err)
+
 		if err != nil {
 			fmt.Println("Error db.QueryContext ", err)
 			return
@@ -110,7 +162,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 		}
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Track SQL query with context
 		query = "select id, subject from tbl_faq limit 10"
 		sqlCtx, _ = whatapsql.Start(ctx, dataSource, query)
 		rows, err = db.QueryContext(ctx, query)
@@ -136,6 +188,10 @@ func main() {
 
 	}))
 
+	// ============================================================
+	// CASE 2: QueryRow with Manual Tracking
+	// ============================================================
+	// Demonstrates tracking single row queries.
 	http.HandleFunc("/queryRow", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -156,9 +212,12 @@ func main() {
 		var subject string
 		var query string
 		query = "select id, subject from tbl_faq limit 1"
+
+		// Track QueryRow
 		sqlCtx, _ = whatapsql.Start(ctx, dataSource, query)
 		row := db.QueryRow(query)
 		whatapsql.End(sqlCtx, nil)
+
 		// Scan and close
 		if err := row.Scan(&id, &subject); err != nil {
 			fmt.Println("Error Row.Scan ", err)
@@ -166,9 +225,12 @@ func main() {
 			fmt.Println(id, subject)
 			buffer.WriteString(fmt.Sprintln(id, subject, "<br>"))
 		}
+
+		// Track QueryRowContext
 		sqlCtx, _ = whatapsql.Start(ctx, dataSource, query)
 		row = db.QueryRowContext(ctx, query)
 		whatapsql.End(sqlCtx, nil)
+
 		// Scan and close
 		if err := row.Scan(&id, &subject); err != nil {
 			fmt.Println("Error db.QueryRowContext")
@@ -183,6 +245,11 @@ func main() {
 
 	}))
 
+	// ============================================================
+	// CASE 3: Prepared Statement with Parameter Tracking
+	// ============================================================
+	// Demonstrates tracking prepared statements with parameters.
+	// Use whatapsql.StartWithParam() to include parameter values in trace.
 	http.HandleFunc("/prepare", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -208,6 +275,7 @@ func main() {
 
 		query := "select id, subject from tbl_faq where id in (?,?) limit 10"
 		if stmt, err := db.Prepare(query); err == nil {
+			// Track with parameters using StartWithParam
 			sqlCtx, _ = whatapsql.StartWithParam(ctx, dataSource, query, params...)
 			if rows, err1 := stmt.Query(params...); err1 == nil {
 				whatapsql.End(sqlCtx, err1)
@@ -351,6 +419,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 4: Named Parameters
+	// ============================================================
+	// Demonstrates tracking with named parameters using sql.Named().
+	// Use whatapsql.StartWithParamArray() for named parameter arrays.
 	http.HandleFunc("/named", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -372,10 +445,14 @@ func main() {
 		query := "select id, subject from tbl_faq where id in (?, ?) limit 10"
 		var id int
 		var subject string
+
+		// Named parameters using sql.Named()
 		params := make([]interface{}, 0)
 		params = append(params, sql.Named("idx1", 8))
 		params = append(params, sql.Named("idx2", 1))
+
 		if stmt, err := db.Prepare(query); err == nil {
+			// Use StartWithParamArray for named parameters
 			sqlCtx, _ = whatapsql.StartWithParamArray(ctx, dataSource, query, params)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
 				whatapsql.End(sqlCtx, err1)
@@ -406,6 +483,10 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 5: Exec (INSERT, UPDATE, DELETE)
+	// ============================================================
+	// Demonstrates tracking DML statements.
 	http.HandleFunc("/exec", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -430,6 +511,7 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
+		// Track UPDATE statement
 		query := "update tbl_faq set subject = 'aaa' where id in (?,?)"
 		sqlCtx, _ = whatapsql.StartWithParamArray(ctx, dataSource, query, params)
 		if res, err := db.Exec(query, params...); err == nil {
@@ -456,6 +538,10 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 6: Transaction with Begin/Commit/Rollback
+	// ============================================================
+	// Demonstrates tracking database transactions.
 	http.HandleFunc("/tx", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -480,9 +566,12 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
+		// Track transaction begin
 		sqlCtx, _ = whatapsql.Start(ctx, dataSource, "Begin Tx")
 		if tx, err := db.BeginTx(ctx, nil); err == nil {
 			whatapsql.End(sqlCtx, err)
+
+			// Track queries within transaction
 			query = "update tbl_faq set subject = 'bbb' where id in (?,?)"
 			sqlCtx1, _ := whatapsql.StartWithParam(ctx, dataSource, query, params...)
 			if res, err := tx.Exec(query, params...); err != nil {
@@ -554,6 +643,10 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 7: Using Shared Service DB with Manual Tracking
+	// ============================================================
+	// Demonstrates tracking queries on a shared/global database connection.
 	http.HandleFunc("/service/index", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -565,6 +658,8 @@ func main() {
 		var id int
 		var subject string
 		query := "select id, subject from tbl_faq limit 10"
+
+		// Track query on shared service DB
 		sqlCtx, _ := whatapsql.Start(ctx, dataSource, query)
 		if rows, err := serviceDB.QueryContext(ctx, query); err == nil {
 			whatapsql.End(sqlCtx, err)
@@ -605,6 +700,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 8: Using Goroutine ID for Context-less Tracking
+	// ============================================================
+	// Demonstrates using trace.GetGID() when context is not available.
+	// Enable go.use_goroutine_id_enabled=true in whatap.conf.
 	http.HandleFunc("/service/gid", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -612,6 +712,8 @@ func main() {
 		// ctx := r.Context()
 		fmt.Println("Request -", r)
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		// Get goroutine ID for debugging
 		fmt.Println("GID=", trace.GetGID())
 		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", trace.GetGID()))
 
@@ -639,6 +741,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// CASE 9: No HTTP Transaction Context
+	// ============================================================
+	// Handler without whataphttp.Func wrapper - no HTTP transaction.
+	// SQL tracking still works but won't be linked to HTTP transaction.
 	http.HandleFunc("/notx/select", func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -675,6 +782,10 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// CASE 10: Custom Error Tracking
+	// ============================================================
+	// Demonstrates passing custom errors to whatapsql.End().
 	http.HandleFunc("/notx/error", func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		w.Header().Add("Content-Type", "text/html")
@@ -688,6 +799,7 @@ func main() {
 		query := "select id, subject from tbl_faq limit 10"
 		sqlCtx, _ := whatapsql.Start(ctx, dataSource, query)
 		if rows, err := serviceDB.QueryContext(ctx, query); err == nil {
+			// Pass custom error to End() for tracking
 			//whatapsql.End(sqlCtx, err)
 			whatapsql.End(sqlCtx, fmt.Errorf("custom error"))
 			defer rows.Close()

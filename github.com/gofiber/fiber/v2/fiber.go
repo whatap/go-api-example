@@ -1,3 +1,27 @@
+// Fiber v2 (github.com/gofiber/fiber/v2) Instrumentation Example
+//
+// This example demonstrates how to instrument Fiber v2 web framework applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Add whatapfiber.Middleware() to Fiber app
+// 3. Use c.Context() to get transaction context in handlers
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - SQL query tracking via whatapsql
+// - HTTP client call tracking via httpc
+// - Custom method tracing via method.Start/End
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+//
+// CONTEXT ACCESS:
+// Fiber uses c.Context() to get the underlying fasthttp.RequestCtx,
+// which implements context.Context interface.
+// This context links all operations to the HTTP transaction.
+
 package main
 
 import (
@@ -31,12 +55,18 @@ type HTMLData struct {
 	//HTMLContent template.HTML
 }
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -57,6 +87,8 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
+// Used with httpc.Start/End for tracking
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -103,6 +135,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -123,34 +160,62 @@ func main() {
 
 	engine := html.New("./templates/github.com/fiber/v2", ".html")
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Add WhaTap Middleware
+	// ============================================================
+	// BEFORE (Original):
+	//   r := fiber.New(fiber.Config{...})
+	//   r.Use(recover.New())
+	//   r.Get("/hello", handler)
+	//
+	// AFTER (Instrumented):
+	//   r := fiber.New(fiber.Config{...})
+	//   r.Use(recover.New())
+	//   r.Use(whatapfiber.Middleware())  // Add this line
+	//   r.Get("/hello", handler)
+	//
+	// NOTE: Use Middleware() with parentheses (function call, not value).
 	r := fiber.New(fiber.Config{
 		StrictRouting: true,
 		Views:         engine,
 	})
 
 	r.Use(recover.New())
-	r.Use(whatapfiber.Middleware())
+	r.Use(whatapfiber.Middleware()) // WhaTap middleware
 
 	// app.Get("/", index)
 	// app.Get("/panic", panicFunc)
 	// app.Get("/selectRows", selectRow)
 	// app.Get("/sleepSecond", sleepSecond)
 
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Access Transaction Context
+	// ============================================================
+	// Use c.Context() to get the transaction context.
+	// This returns fasthttp.RequestCtx which implements context.Context.
+	// Pass this context to trace.Step(), method.Start(), httpc.Start(), etc.
 	r.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", fiber.Map{
 			"Title": "fiber/v2",
 		})
 	})
+
+	// Example: Using context with custom steps and method tracing
 	r.Get("/index", func(c *fiber.Ctx) error {
 		// fmt.Println("Request -", c.Request)
 
+		// Get transaction context from Fiber context
 		ctx := c.Context()
+
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Call custom method - will be tracked as "Method" step
 		getUser(ctx)
 		return c.SendString("/index <br/>Test Body")
 	})
 
+	// Example: URL path parameters with context
 	r.Get("/main/:idx", func(c *fiber.Ctx) error {
 		// fmt.Println("Request -", c.Request)
 		fmt.Println("Param idx=", c.Params("idx", "0"))
@@ -159,13 +224,22 @@ func main() {
 		return c.SendString("/main <br/>Test Body")
 	})
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context via headers.
 	r.Get("/httpc", func(c *fiber.Ctx) error {
 		ctx := c.Context()
 		//fmt.Println("Request -", c.Request())
 
 		callUrl := "http://localhost:8081/index"
+
+		// Start HTTP client call tracking
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
+
+		// Make HTTP call with trace headers for distributed tracing
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -197,6 +271,12 @@ func main() {
 		return c.SendString(string(buffer.Bytes()))
 	})
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
+	// Note: This example uses standard database/sql, not whatapsql.
 	r.Get("/sql/select", func(c *fiber.Ctx) error {
 		ctx := c.Context()
 		var buffer bytes.Buffer
@@ -206,6 +286,8 @@ func main() {
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
+
+		// Pass context to QueryContext for tracking
 		rows, err := db.QueryContext(ctx, query)
 		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
 
@@ -267,11 +349,16 @@ func main() {
 		return c.SendString(string(buffer.Bytes()))
 	})
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are automatically captured by the middleware.
 	r.Get("/panic", func(c *fiber.Ctx) error {
 		panic(fmt.Errorf("custom panic"))
 		return c.SendString("/panic <br/>Test Body")
 	})
 
+	// Form handling examples (standard patterns)
 	r.Get("/input", func(c *fiber.Ctx) error {
 		ctx := c.Context()
 		var buffer bytes.Buffer

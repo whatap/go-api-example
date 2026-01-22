@@ -1,3 +1,22 @@
+// Echo v4 Framework Instrumentation Example
+//
+// This example demonstrates how to instrument Echo v4 web framework applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Add whatapecho.Middleware() using e.Pre() or e.Use()
+// 3. Optionally wrap error handler with whatapecho.WrapHTTPErrorHandler()
+// 4. Use c.Request().Context() to get transaction context in handlers
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+//
+// NOTE: Use e.Pre() for middleware to ensure it runs before routing.
+
 package main
 
 import (
@@ -25,20 +44,23 @@ import (
 	"github.com/whatap/go-api/trace"
 )
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
-	// GET 호출
 	if resp, err := http.Get(callUrl); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 
-		// 결과 출력
 		if data, err := ioutil.ReadAll(resp.Body); err == nil {
 			return resp.StatusCode, string(data), err
 		} else {
@@ -51,6 +73,7 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -95,7 +118,6 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 type HTMLData struct {
 	Title   string
 	Content string
-	//HTMLContent template.HTML
 }
 
 func main() {
@@ -110,6 +132,9 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -117,6 +142,9 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -131,25 +159,55 @@ func main() {
 	e := echo.New()
 	e.Renderer = t
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Add WhaTap Middleware & Error Handler
+	// ============================================================
+	// BEFORE (Original):
+	//   e := echo.New()
+	//   e.GET("/hello", handler)
+	//
+	// AFTER (Instrumented):
+	//   e := echo.New()
+	//   e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
+	//   e.Pre(whatapecho.Middleware())
+	//   e.GET("/hello", handler)
+	//
+	// WrapHTTPErrorHandler: Captures errors for transaction tracking
+	// Middleware: Creates transaction for each request
+	// Use e.Pre() to run middleware before routing (recommended)
 	e.HTTPErrorHandler = whatapecho.WrapHTTPErrorHandler(e.DefaultHTTPErrorHandler)
 	if IsWhatap {
 		e.Pre(whatapecho.Middleware())
 	}
 	e.Use(middleware.Recover())
 
+	// ============================================================
+	// Basic Handler Example
+	// ============================================================
 	e.GET("/", func(c echo.Context) error {
 		data := &HTMLData{}
 		data.Title = "echo/v4 server"
 		data.Content = c.Request().RequestURI
 		return c.Render(http.StatusOK, "index.html", data)
 	})
+
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Access Transaction Context
+	// ============================================================
+	// Use c.Request().Context() to get the transaction context.
+	// This is different from Gin where you use c.Request.Context()
 	e.GET("/index", func(c echo.Context) error {
 		fmt.Println("Request -", c.Request())
 
+		// Get transaction context from Echo context
 		ctx := c.Request().Context()
+
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Call custom method - will be tracked
 		getUser(ctx)
+
 		fmt.Println("Response -", c.Response())
 		return c.String(http.StatusOK, c.Request().RequestURI+"<br/><hr/>")
 	})
@@ -162,6 +220,11 @@ func main() {
 		return c.String(http.StatusOK, c.Request().RequestURI+"<br/><hr/>")
 	})
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context.
 	e.GET("/httpc", func(c echo.Context) error {
 		ctx := c.Request().Context()
 		fmt.Println("Request -", c.Request())
@@ -183,6 +246,7 @@ func main() {
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 
+	// HTTP client with query parameters for load testing
 	e.GET("/httpc/query", func(c echo.Context) error {
 		var cnt int
 		if i, err := strconv.Atoi(c.QueryParam("cnt")); err == nil {
@@ -251,6 +315,11 @@ func main() {
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
 	e.GET("/sql/select", func(c echo.Context) error {
 
 		if err := c.Request().ParseForm(); err != nil {
@@ -262,16 +331,16 @@ func main() {
 		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
 
 		var query string
-
-		// 복수 Row를 갖는 SQL 쿼리
 		var id int
 		var subject string
+
+		// Simple query with context
 		query = "select id, subject from tbl_faq limit 10"
 		rows, err := db.QueryContext(ctx, query)
 		if err != nil {
 			return fmt.Errorf("db.QueryContext error:%s", err.Error())
 		}
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close()
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
@@ -281,7 +350,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		// Prepared Statement 생성
+		// Prepared Statement with context
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -289,12 +358,11 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
 
-		rows1, _ := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+		rows1, _ := stmt.QueryContext(ctx, params...)
 		defer rows1.Close()
 
 		for rows1.Next() {
@@ -305,7 +373,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		rows2, _ := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+		rows2, _ := stmt.QueryContext(ctx, 8, 1)
 		defer rows2.Close()
 
 		for rows1.Next() {
@@ -320,6 +388,7 @@ func main() {
 
 	})
 
+	// SQL query with load testing parameters
 	e.GET("/sql/query", func(c echo.Context) error {
 
 		var cnt int
@@ -346,8 +415,6 @@ func main() {
 		buffer.WriteString(c.Request().RequestURI + "<br/><hr/>")
 
 		var query string
-
-		// 복수 Row를 갖는 SQL 쿼리
 		var id int
 		var subject string
 		for i := 0; i < loop; i++ {
@@ -357,7 +424,7 @@ func main() {
 				if err != nil {
 					return fmt.Errorf("db.QueryContext error:%s", err.Error())
 				}
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close()
 
 				for rows.Next() {
 					err := rows.Scan(&id, &subject)
@@ -367,7 +434,6 @@ func main() {
 					buffer.WriteString(fmt.Sprintln(id, subject))
 				}
 
-				// Prepared Statement 생성
 				query = "select id, subject from tbl_faq where id = ? limit ?"
 				stmt, err := db.PrepareContext(ctx, query)
 				if err != nil {
@@ -375,12 +441,11 @@ func main() {
 				}
 				defer stmt.Close()
 
-				// Prepared Statement 실행
 				params := make([]interface{}, 0)
 				params = append(params, 8)
 				params = append(params, 1)
 
-				rows1, _ := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+				rows1, _ := stmt.QueryContext(ctx, params...)
 				defer rows1.Close()
 
 				for rows1.Next() {
@@ -391,7 +456,7 @@ func main() {
 					buffer.WriteString(fmt.Sprintln(id, subject))
 				}
 
-				rows2, _ := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+				rows2, _ := stmt.QueryContext(ctx, 8, 1)
 				defer rows2.Close()
 
 				for rows1.Next() {
@@ -410,6 +475,10 @@ func main() {
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 	})
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are captured by the middleware.Recover() and tracked.
 	e.GET("/panic", func(c echo.Context) error {
 		fmt.Println("Request -", c.Request())
 		panic(fmt.Errorf("custom panic"))
@@ -418,6 +487,7 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!\n")
 	})
 
+	// Form handling examples
 	e.GET("/input", func(c echo.Context) error {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")
@@ -474,6 +544,7 @@ func main() {
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 
 	})
+
 	e.GET("/inputFile", func(c echo.Context) error {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")
@@ -488,11 +559,11 @@ func main() {
 		return c.HTMLBlob(http.StatusOK, buffer.Bytes())
 
 	})
+
 	e.POST("/upload", func(c echo.Context) error {
 		fmt.Println("Request, ", c.Request())
 		var buffer bytes.Buffer
 
-		// Read form fields
 		name := c.FormValue("name")
 		email := c.FormValue("email")
 		fmt.Println("fields name=", name, ",email=", email)
@@ -500,11 +571,6 @@ func main() {
 		buffer.WriteString("name=" + name + "<br/>")
 		buffer.WriteString("email=" + email + "<br/>")
 
-		//-----------
-		// Read file
-		//-----------
-
-		// Source
 		file, err := c.FormFile("file")
 		if err != nil {
 			fmt.Println("c.FromFile err=", err)
@@ -517,7 +583,6 @@ func main() {
 		}
 		defer src.Close()
 
-		// Destination
 		dst, err := os.Create("./" + file.Filename)
 		if err != nil {
 			fmt.Println("os.Create ", file.Filename, ", err=", err)
@@ -525,7 +590,6 @@ func main() {
 		}
 		defer dst.Close()
 
-		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
 			fmt.Println("io.Copy src to dest err", err)
 			return err

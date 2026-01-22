@@ -1,3 +1,46 @@
+// net/http Server Instrumentation Example
+//
+// This example demonstrates how to instrument net/http server applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// There are THREE methods to instrument HTTP handlers:
+//
+// METHOD 1: Manual trace.StartWithRequest/End (most flexible)
+//   - Call trace.StartWithRequest(r) at handler start
+//   - Call trace.End(ctx, nil) at handler end
+//   - Use ctx for all subsequent operations
+//
+// METHOD 2: whataphttp.Func() wrapper (recommended for HandleFunc)
+//   - Wraps http.HandlerFunc for automatic transaction management
+//   - Use r.Context() to get transaction context
+//
+// METHOD 3: whataphttp.HandlerFunc() / whataphttp.Handler() (for Handle)
+//   - Use with http.Handle() for http.Handler implementations
+//   - Provides automatic panic recovery
+//
+// HTTP CLIENT INSTRUMENTATION:
+// For outgoing HTTP calls, there are TWO methods:
+//
+// METHOD 1: Manual httpc.Start/End (explicit control)
+//   - Call httpc.Start(ctx, url) before the call
+//   - Call httpc.End(httpcCtx, statusCode, "", err) after the call
+//   - Use trace.GetMTrace(ctx) to propagate trace headers
+//
+// METHOD 2: whataphttp.NewRoundTrip() (recommended)
+//   - Wrap http.Client.Transport with whataphttp.NewRoundTrip()
+//   - Automatically tracks all HTTP calls made by the client
+//   - Automatically propagates trace headers
+//
+// FEATURES:
+// - HTTP transaction tracking (URL, method, status code, response time)
+// - SQL query tracking via whatapsql
+// - Custom method tracing via method.Start/End
+// - Custom step annotation via trace.Step()
+// - HTTP client call tracking via httpc or RoundTrip
+// - Distributed tracing via trace.GetMTrace()
+// - Panic tracking and recovery
+
 package main
 
 import (
@@ -21,12 +64,22 @@ import (
 	"github.com/whatap/go-api/trace"
 )
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
+	start := time.UnixMilli()
+
+	end := time.UnixMilli()
+	elapsed_time = end - start
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests (without instrumentation)
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -64,6 +117,8 @@ func WrapResponse(url string, f WhatapHttpGet) (*http.Response, error) {
 	return f(url)
 }
 
+// Helper function for HTTP requests with custom headers
+// Used with httpc.Start/End for tracking
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -104,6 +159,7 @@ func httpWithRequest(method string, callUrl string, body string, headers http.He
 
 }
 
+// Custom RoundTripper example - can be chained with whataphttp.NewRoundTrip
 type AccessLogRoundTrip struct {
 	transport http.RoundTripper
 }
@@ -157,6 +213,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -164,6 +225,10 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
+	// Use whatapsql.OpenContext() for automatic SQL query tracking.
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -171,6 +236,20 @@ func main() {
 	}
 	defer db.Close()
 
+	// ============================================================
+	// METHOD 1: Manual trace.StartWithRequest/End
+	// ============================================================
+	// BEFORE (Original):
+	//   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//       // handler logic
+	//   })
+	//
+	// AFTER (Instrumented):
+	//   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//       ctx, _ := trace.StartWithRequest(r)
+	//       defer trace.End(ctx, nil)
+	//       // handler logic - use ctx for subsequent operations
+	//   })
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
@@ -186,8 +265,10 @@ func main() {
 		data.Content = r.RequestURI
 		tp.Execute(w, data)
 
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Call custom method - will be tracked as "Method" step
 		getUser(ctx)
 		fmt.Println("Response -", r.Response)
 	})
@@ -235,6 +316,16 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// HTTP Client Tracking: METHOD 1 - httpc.Start/End
+	// ============================================================
+	// Use httpc.Start/End for explicit control over HTTP client tracking.
+	// Use trace.GetMTrace(ctx) to get headers for distributed tracing.
+	//
+	// Flow:
+	// 1. httpcCtx, _ := httpc.Start(ctx, url) - Start tracking
+	// 2. Make HTTP call with trace.GetMTrace(ctx) headers
+	// 3. httpc.End(httpcCtx, statusCode, "", err) - End tracking
 	http.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
@@ -245,8 +336,10 @@ func main() {
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
 		callUrl := "http://localhost:8081/index"
+		// Start HTTP client call tracking
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 
+		// Make HTTP call with trace headers for distributed tracing
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -287,6 +380,20 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// HTTP Client Tracking: METHOD 2 - whataphttp.NewRoundTrip()
+	// ============================================================
+	// Use whataphttp.NewRoundTrip() to wrap http.Client.Transport.
+	// This automatically tracks all HTTP calls and propagates trace headers.
+	//
+	// BEFORE (Original):
+	//   client := http.DefaultClient
+	//   resp, err := client.Get(url)
+	//
+	// AFTER (Instrumented):
+	//   client := http.DefaultClient
+	//   client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
+	//   resp, err := client.Get(url)
 	http.HandleFunc("/roundTripper", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
@@ -298,6 +405,7 @@ func main() {
 
 		callUrl := "http://localhost:8081/index"
 
+		// Wrap transport with whataphttp.NewRoundTrip for automatic tracking
 		client := http.DefaultClient
 		client.Transport = whataphttp.NewRoundTrip(ctx, http.DefaultTransport)
 		if resp, err := client.Get(callUrl); err == nil {
@@ -389,6 +497,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// NewRoundTrip with nil Transport (uses http.DefaultTransport)
+	// ============================================================
+	// If original transport is nil, NewRoundTrip uses http.DefaultTransport.
+	// Combined with whataphttp.Func() for automatic transaction management.
 	http.HandleFunc("/roundTripper/nil", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -400,6 +513,7 @@ func main() {
 		callUrl := "http://localhost:8081/index"
 
 		client := http.DefaultClient
+		// nil transport - NewRoundTrip uses http.DefaultTransport internally
 		client.Transport = whataphttp.NewRoundTrip(ctx, nil)
 		if resp, err := client.Get(callUrl); err == nil {
 			defer resp.Body.Close()
@@ -453,6 +567,11 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// Chaining RoundTrippers
+	// ============================================================
+	// You can chain custom RoundTrippers with whataphttp.NewRoundTrip.
+	// Example: AccessLogRoundTrip -> whataphttp.NewRoundTrip -> http.DefaultTransport
 	http.HandleFunc("/roundTripper/multi", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := trace.StartWithRequest(r)
 		defer trace.End(ctx, nil)
@@ -465,6 +584,7 @@ func main() {
 		callUrl := "http://localhost:8081/index"
 
 		client := http.DefaultClient
+		// Chain: AccessLog -> WhaTap -> DefaultTransport
 		client.Transport = NewAccessLogRoundTrip(whataphttp.NewRoundTrip(ctx, http.DefaultTransport))
 		if resp, err := client.Get(callUrl); err == nil {
 			defer resp.Body.Close()
@@ -579,6 +699,10 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	}))
 
+	// ============================================================
+	// File Transport Example
+	// ============================================================
+	// NewRoundTrip can wrap any http.RoundTripper including file transport.
 	http.Handle("/fileTransport", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -614,6 +738,18 @@ func main() {
 		}
 	}))
 
+	// ============================================================
+	// METHOD 2: whataphttp.Func() for HandleFunc
+	// ============================================================
+	// Use whataphttp.Func() to wrap handler functions.
+	// Transaction is automatically started and ended.
+	// Access context via r.Context().
+	//
+	// BEFORE (Original):
+	//   http.HandleFunc("/path", func(w http.ResponseWriter, r *http.Request) {...})
+	//
+	// AFTER (Instrumented):
+	//   http.HandleFunc("/path", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {...}))
 	http.HandleFunc("/wrapHandleFunc", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
@@ -622,9 +758,21 @@ func main() {
 
 		buffer.WriteString("</body></html>")
 		_, _ = w.Write(buffer.Bytes())
+		// Access context via r.Context()
 		trace.Step(r.Context(), "Text Message wrapHandleFunc", "wrapHandleFunc", 6, 6)
 	}))
 
+	// ============================================================
+	// METHOD 3: whataphttp.HandlerFunc() for Handle
+	// ============================================================
+	// Use whataphttp.HandlerFunc() with http.Handle().
+	// Same functionality as whataphttp.Func() but returns http.Handler.
+	//
+	// BEFORE (Original):
+	//   http.Handle("/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {...}))
+	//
+	// AFTER (Instrumented):
+	//   http.Handle("/path", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {...}))
 	http.Handle("/wrapHandleFunc1", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		var buffer bytes.Buffer
@@ -636,6 +784,11 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
 	}))
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
 	http.Handle("/sql/select", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
@@ -645,7 +798,7 @@ func main() {
 
 		var query string
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Simple query with context - automatically tracked
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
@@ -663,7 +816,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		// Prepared Statement 생성
+		// Prepared Statement with context
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -671,7 +824,7 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
+		// Execute prepared statement with parameters
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
@@ -703,6 +856,11 @@ func main() {
 
 	}))
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are automatically captured by whataphttp.HandlerFunc.
+	// The panic is recorded in the transaction trace and re-thrown.
 	http.Handle("/panic", whataphttp.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Errorf("custom panic"))
 	}))

@@ -1,3 +1,21 @@
+// Gin Framework Instrumentation Example
+//
+// This example demonstrates how to instrument Gin web framework applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Add whatapgin.Middleware() to Gin router
+// 3. Use c.Request.Context() to get transaction context in handlers
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+//
+// IMPORTANT: The WhaTap middleware should be added FIRST, before other middlewares.
+
 package main
 
 import (
@@ -22,12 +40,18 @@ import (
 	"github.com/whatap/go-api/trace"
 )
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -48,6 +72,7 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -92,6 +117,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -99,6 +129,10 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
+	// Use whatapsql.OpenContext() for automatic SQL query tracking.
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -106,11 +140,27 @@ func main() {
 	}
 	defer db.Close()
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Add WhaTap Middleware
+	// ============================================================
+	// BEFORE (Original):
+	//   r := gin.Default()
+	//   r.GET("/hello", handler)
+	//
+	// AFTER (Instrumented):
+	//   r := gin.Default()
+	//   r.Use(whatapgin.Middleware())  // Add this line
+	//   r.GET("/hello", handler)
+	//
+	// NOTE: Add middleware FIRST, before other middlewares for complete tracking.
 	r := gin.Default()
 	r.Use(whatapgin.Middleware())
 
 	r.LoadHTMLGlob("templates/github.com/gin-gonic/*")
 
+	// ============================================================
+	// Basic Handler Example
+	// ============================================================
 	r.GET("/", func(c *gin.Context) {
 		fmt.Println("Request -", c.Request)
 		c.HTML(http.StatusOK, "index.html", gin.H{
@@ -119,13 +169,24 @@ func main() {
 		},
 		)
 	})
+
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Access Transaction Context
+	// ============================================================
+	// Use c.Request.Context() to get the transaction context.
+	// This context links all subsequent operations to the HTTP transaction.
 	r.GET("/index", func(c *gin.Context) {
 		fmt.Println("Request -", c.Request)
 
+		// Get transaction context from Gin context
 		ctx := c.Request.Context()
+
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Call custom method - will be tracked as "Method" step
 		getUser(ctx)
+
 		c.JSON(http.StatusOK, gin.H{
 			"message": "/index <br/>Test Body",
 		})
@@ -140,13 +201,23 @@ func main() {
 		})
 	})
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context via headers.
 	r.GET("/httpc", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		fmt.Println("Request -", c.Request)
 
 		callUrl := "http://localhost:8081/index"
+
+		// Start HTTP client call tracking
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
+
 		var buffer bytes.Buffer
+		// Pass trace headers using trace.GetMTrace(ctx)
+		// This enables distributed tracing across services
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -182,17 +253,22 @@ func main() {
 		})
 	})
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
 	r.GET("/sql/select", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		var buffer bytes.Buffer
 		var query string
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Simple query with context - automatically tracked
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
 		rows, err := db.QueryContext(ctx, query)
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close()
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
@@ -205,7 +281,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		// Prepared Statement 생성
+		// Prepared Statement with context
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -216,12 +292,12 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
+		// Execute prepared statement with parameters
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
 
-		rows1, err1 := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+		rows1, err1 := stmt.QueryContext(ctx, params...)
 		if err1 != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err1.Error(),
@@ -241,7 +317,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		rows2, err2 := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+		rows2, err2 := stmt.QueryContext(ctx, 8, 1)
 		if err2 != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err2.Error(),
@@ -266,6 +342,10 @@ func main() {
 		})
 	})
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are automatically captured by the middleware.
 	r.GET("/panic", func(c *gin.Context) {
 		panic(fmt.Errorf("custom panic"))
 		c.JSON(http.StatusOK, gin.H{
@@ -273,6 +353,7 @@ func main() {
 		})
 	})
 
+	// Form handling examples (standard Gin patterns)
 	r.GET("/input", func(c *gin.Context) {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")
@@ -348,16 +429,11 @@ func main() {
 		buffer.WriteString("name=" + name + "<br/>")
 		buffer.WriteString("email=" + email + "<br/>")
 
-		//-----------
 		// Read file
-		//-----------
 		file, _ := c.FormFile("file")
 		fmt.Println(file.Filename + " uploaded")
 
-		// 파일 저장
-
-		// 방법 1.
-		// 기본 제공 함수로 파일 저장
+		// Save file
 		c.SaveUploadedFile(file, file.Filename)
 		fmt.Println("upload ok ", file.Filename, ", size=", strconv.FormatInt(file.Size, 10))
 		buffer.WriteString("upload ok " + file.Filename + ", size=" + strconv.FormatInt(file.Size, 10))

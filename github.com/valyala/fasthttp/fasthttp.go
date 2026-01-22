@@ -1,3 +1,29 @@
+// FastHTTP (github.com/valyala/fasthttp) Instrumentation Example
+//
+// This example demonstrates how to instrument FastHTTP web framework applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Wrap each handler with whatapfasthttp.Func()
+// 3. Use ctx (*fasthttp.RequestCtx) as the context directly
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - SQL query tracking via whatapsql
+// - HTTP client call tracking via httpc
+// - Custom method tracing via method.Start/End
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+//
+// IMPORTANT: FastHTTP does NOT use middleware pattern.
+// Instead, wrap each handler function with whatapfasthttp.Func().
+//
+// CONTEXT ACCESS:
+// FastHTTP's RequestCtx implements context.Context interface directly.
+// Use ctx (*fasthttp.RequestCtx) as the context parameter for trace functions.
+
 package main
 
 import (
@@ -31,12 +57,18 @@ type HTMLData struct {
 	//HTMLContent template.HTML
 }
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// FastHTTP's RequestCtx implements context.Context, so it can be used directly.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -57,6 +89,8 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
+// Used with httpc.Start/End for tracking
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -102,6 +136,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -109,6 +148,10 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
+	// Use whatapsql.OpenContext() for automatic SQL query tracking.
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -118,6 +161,21 @@ func main() {
 
 	r := router.New()
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Wrap Handlers with whatapfasthttp.Func
+	// ============================================================
+	// FastHTTP does not use middleware pattern like other frameworks.
+	// Instead, wrap each handler function with whatapfasthttp.Func().
+	//
+	// BEFORE (Original):
+	//   r.GET("/", func(ctx *fasthttp.RequestCtx) {
+	//       ctx.WriteString("Hello")
+	//   })
+	//
+	// AFTER (Instrumented):
+	//   r.GET("/", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
+	//       ctx.WriteString("Hello")
+	//   }))
 	r.GET("/", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		tp, err := template.ParseFiles("templates/github.com/valyala/index.html")
 		if err != nil {
@@ -133,16 +191,26 @@ func main() {
 		ctx.WriteString("Welcome!")
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
+
+	// Example: URL path parameters
 	r.GET("/hello/{name}", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		fmt.Fprintf(ctx, "Hello, %s!\n", ctx.UserValue("name"))
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
 
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Use ctx as Context Directly
+	// ============================================================
+	// FastHTTP's RequestCtx implements context.Context interface.
+	// Use ctx directly as the context parameter for trace functions.
+	// No need to call any method like c.Context() or r.Context().
 	r.GET("/index", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		// fmt.Println("Request -", ctx.Request)
 
+		// Use ctx directly as context - it implements context.Context
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Pass ctx to custom method - works because ctx implements context.Context
 		getUser(ctx)
 		ctx.WriteString(fmt.Sprintln("message", "/index <br/>Test Body"))
 		ctx.SetContentType("text/html;charset=utf8")
@@ -157,12 +225,21 @@ func main() {
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context via headers.
 	r.GET("/httpc", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		// fmt.Println("Request -", c.Request)
 
 		callUrl := "http://localhost:8081/index"
+
+		// Start HTTP client call tracking - use ctx directly
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
+
+		// Make HTTP call with trace headers for distributed tracing
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -195,6 +272,11 @@ func main() {
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass ctx (RequestCtx) to QueryContext/ExecContext for transaction linking.
 	r.GET("/sql/select", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		var buffer bytes.Buffer
 		var query string
@@ -203,6 +285,8 @@ func main() {
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
+
+		// Pass ctx directly to QueryContext - works because ctx implements context.Context
 		rows, err := db.QueryContext(ctx, query)
 		if err == nil {
 			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
@@ -266,12 +350,17 @@ func main() {
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are captured by the whatapfasthttp.Func wrapper.
 	r.GET("/panic", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		panic(fmt.Errorf("custom panic"))
 		ctx.WriteString(string(ctx.RequestURI()) + "<br/><hr/>")
 		ctx.SetContentType("text/html;charset=utf8")
 	}))
 
+	// Form handling examples (standard patterns)
 	r.GET("/input", whatapfasthttp.Func(func(ctx *fasthttp.RequestCtx) {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")

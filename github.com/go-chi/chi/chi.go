@@ -1,3 +1,25 @@
+// Chi Framework Instrumentation Example
+//
+// This example demonstrates how to instrument Chi web framework applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Add whatapchi.Middleware to Chi router
+// 3. Use r.Context() to get transaction context in handlers
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - SQL query tracking via whatapsql
+// - HTTP client call tracking via httpc
+// - Custom method tracing via method.Start/End
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+//
+// IMPORTANT: Chi middleware is a function value (not a function call).
+// Use r.Use(whatapchi.Middleware) NOT r.Use(whatapchi.Middleware())
+
 package main
 
 import (
@@ -31,12 +53,18 @@ type HTMLData struct {
 	//HTMLContent template.HTML
 }
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -57,6 +85,8 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
+// Used with httpc.Start/End for tracking
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -102,6 +132,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -109,6 +144,10 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
+	// Use whatapsql.OpenContext() for automatic SQL query tracking.
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -116,9 +155,31 @@ func main() {
 	}
 	defer db.Close()
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Add WhaTap Middleware
+	// ============================================================
+	// BEFORE (Original):
+	//   r := chi.NewRouter()
+	//   r.Use(middleware.Logger)
+	//   r.Get("/hello", handler)
+	//
+	// AFTER (Instrumented):
+	//   r := chi.NewRouter()
+	//   r.Use(middleware.Logger)
+	//   r.Use(whatapchi.Middleware)  // Add this line (note: no parentheses!)
+	//   r.Get("/hello", handler)
+	//
+	// IMPORTANT: Chi uses function values for middleware, not function calls.
+	// Use whatapchi.Middleware (without parentheses), NOT whatapchi.Middleware()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Use(whatapchi.Middleware)
+	r.Use(whatapchi.Middleware) // WhaTap middleware - note: no parentheses!
+
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Access Transaction Context
+	// ============================================================
+	// Use r.Context() to get the transaction context.
+	// This context links all subsequent operations to the HTTP transaction.
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		tp, err := template.ParseFiles("templates/github.com/go-chi/index.html")
 		if err != nil {
@@ -131,9 +192,13 @@ func main() {
 
 		tp.Execute(w, data)
 
+		// Get transaction context from request
 		ctx := r.Context()
+
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "/", 0, 0)
 
+		// Call custom method - will be tracked as "Method" step
 		getUser(ctx)
 
 		fmt.Println("Response -", r.Response)
@@ -158,12 +223,21 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context via headers.
 	r.Get("/httpc", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		fmt.Println("Request httpc - ", r)
 		callUrl := fmt.Sprintf("http://localhost:%d/index", port)
+
+		// Start HTTP client call tracking
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
+
+		// Make HTTP call with trace headers for distributed tracing
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -197,12 +271,17 @@ func main() {
 
 	})
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
 	r.Get("/sql/select", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		var buffer bytes.Buffer
 		var query string
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Simple query with context - automatically tracked
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
@@ -228,7 +307,8 @@ func main() {
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
-		// Prepared Statement 생성
+
+		// Prepared Statement with context
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -238,7 +318,7 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
+		// Execute prepared statement with parameters
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
@@ -284,10 +364,15 @@ func main() {
 
 	})
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are automatically captured by the middleware.
 	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Errorf("custom panic"))
 	})
 
+	// Form handling examples (standard patterns)
 	r.Get("/input", func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")

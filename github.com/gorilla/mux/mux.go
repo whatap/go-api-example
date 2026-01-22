@@ -1,3 +1,27 @@
+// Gorilla Mux (github.com/gorilla/mux) Instrumentation Example
+//
+// This example demonstrates how to instrument Gorilla Mux router applications
+// using WhaTap Go API.
+//
+// INSTRUMENTATION OVERVIEW:
+// 1. Call trace.Init() at application startup
+// 2. Add whatapmux.Middleware() to the router
+// 3. Use r.Context() to get transaction context in handlers
+//
+// FEATURES:
+// - Automatic HTTP transaction tracking
+// - Request/Response details (URL, method, status code, response time)
+// - SQL query tracking via whatapsql
+// - HTTP client call tracking via httpc
+// - Custom method tracing via method.Start/End
+// - Error and panic tracking
+// - Distributed tracing via header propagation
+// - Subrouter support (middleware applies to all routes)
+//
+// CONTEXT ACCESS:
+// Gorilla Mux uses standard net/http handlers.
+// Use r.Context() to get the transaction context.
+
 package main
 
 import (
@@ -23,12 +47,18 @@ import (
 	"github.com/whatap/go-api/trace"
 )
 
+// ============================================================
+// Example: Custom Method Tracing
+// ============================================================
+// Use method.Start/End to trace custom functions.
+// This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
 }
 
+// Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
 	// GET 호출
@@ -49,6 +79,8 @@ func httpGet(callUrl string) (int, string, error) {
 	}
 }
 
+// Helper function for HTTP requests with custom headers
+// Used with httpc.Start/End for tracking
 func httpWithRequest(method string, callUrl string, body string, headers http.Header) (int, string, error) {
 	fmt.Println("httpGetWithRequest ", method, ", ", callUrl, ", ", body, ", ", headers)
 	timeout := time.Duration(10 * time.Second)
@@ -100,6 +132,11 @@ func main() {
 	dataSource := *dataSourcePtr
 	IsWhatap := *setWhatapPtr
 
+	// ============================================================
+	// INSTRUMENTATION STEP 1: Initialize WhaTap Agent
+	// ============================================================
+	// Call trace.Init() at application startup.
+	// Configuration can be passed via map or loaded from whatap.conf file.
 	if IsWhatap {
 		config := make(map[string]string)
 		config["net_udp_port"] = fmt.Sprintf("%d", udpPort)
@@ -107,6 +144,10 @@ func main() {
 	}
 	defer trace.Shutdown()
 
+	// ============================================================
+	// Database Connection with Instrumentation
+	// ============================================================
+	// Use whatapsql.OpenContext() for automatic SQL query tracking.
 	db, err := wisql.OpenContext(context.Background(), "mysql", dataSource)
 	if err != nil {
 		fmt.Println("Error service whatapsql.Open ", err)
@@ -114,9 +155,30 @@ func main() {
 	}
 	defer db.Close()
 
+	// ============================================================
+	// INSTRUMENTATION STEP 2: Add WhaTap Middleware
+	// ============================================================
+	// BEFORE (Original):
+	//   r := mux.NewRouter()
+	//   r.HandleFunc("/hello", handler)
+	//
+	// AFTER (Instrumented):
+	//   r := mux.NewRouter()
+	//   r.Use(whatapmux.Middleware())  // Add this line
+	//   r.HandleFunc("/hello", handler)
+	//
+	// NOTE: Middleware applies to the router and all its subrouters.
 	r := mux.NewRouter()
-	r.Use(whatapmux.Middleware())
+	r.Use(whatapmux.Middleware()) // WhaTap middleware
+
+	// Subrouter example - middleware is inherited from parent router
 	subs := r.PathPrefix("/subs").Subrouter()
+
+	// ============================================================
+	// INSTRUMENTATION STEP 3: Access Transaction Context
+	// ============================================================
+	// Use r.Context() to get the transaction context.
+	// This is the same as standard net/http handlers.
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Request -", r)
 		w.Header().Add("Content-Type", "text/html;charset=utf-8")
@@ -132,7 +194,9 @@ func main() {
 		tp.Execute(w, data)
 	})
 
+	// Example: Using context with custom steps and method tracing
 	r.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+		// Get transaction context from request
 		ctx := r.Context()
 		fmt.Println("Request -", r)
 
@@ -141,8 +205,11 @@ func main() {
 		reply := r.RequestURI + " <br/><hr/>"
 
 		_, _ = w.Write(([]byte)(reply))
+
+		// Add custom step to transaction trace
 		trace.Step(ctx, "Text Message", "Message", 3, 3)
 
+		// Call custom method - will be tracked as "Method" step
 		getUser(ctx)
 		fmt.Println("Response -", r.Response)
 
@@ -159,14 +226,23 @@ func main() {
 		fmt.Println("Response -", r.Response)
 	})
 
+	// ============================================================
+	// HTTP Client Call with Distributed Tracing
+	// ============================================================
+	// Use httpc.Start/End for outgoing HTTP call tracking.
+	// Use trace.GetMTrace(ctx) to propagate trace context via headers.
 	r.HandleFunc("/httpc", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
 		fmt.Println("Request -", r)
 		callUrl := "http://localhost:8081/index"
+
+		// Start HTTP client call tracking
 		httpcCtx, _ := httpc.Start(ctx, callUrl)
 		var buffer bytes.Buffer
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
+
+		// Make HTTP call with trace headers for distributed tracing
 		if statusCode, data, err := httpWithRequest("GET", callUrl, "", trace.GetMTrace(ctx)); err == nil {
 			httpc.End(httpcCtx, statusCode, "", nil)
 			buffer.WriteString(fmt.Sprintln("httpc callUrl=", callUrl, ", statuscode=", statusCode, ", data=", data))
@@ -219,6 +295,11 @@ func main() {
 		trace.Step(r.Context(), "Text Message wrapHandleFunc1", "wrapHandleFunc1", 6, 6)
 	})
 
+	// ============================================================
+	// SQL Query Tracking Example
+	// ============================================================
+	// SQL queries are automatically tracked when using whatapsql.
+	// Pass context to QueryContext/ExecContext for transaction linking.
 	r.HandleFunc("/sql/select", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		w.Header().Add("Content-Type", "text/html")
@@ -227,10 +308,12 @@ func main() {
 
 		var query string
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// Simple query with context - automatically tracked
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
+
+		// Pass context to QueryContext for tracking
 		rows, err := db.QueryContext(ctx, query)
 		if err != nil {
 			return
@@ -245,7 +328,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		// Prepared Statement 생성
+		// Prepared Statement with context
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -253,7 +336,7 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
+		// Execute prepared statement with parameters
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
@@ -284,12 +367,18 @@ func main() {
 
 	})
 
+	// ============================================================
+	// Panic Tracking Example
+	// ============================================================
+	// Panics are automatically captured by the middleware.
 	r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Request -", r)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Add("Content-Type", "text/html")
 		panic(fmt.Errorf("custom panic"))
 	})
+
+	// Form handling examples (standard patterns)
 	r.HandleFunc("/input", func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 		buffer.WriteString("<html><body>")
@@ -396,6 +485,12 @@ func main() {
 		_, _ = w.Write(buffer.Bytes())
 
 	})
+
+	// ============================================================
+	// Subrouter Example
+	// ============================================================
+	// Subrouters inherit middleware from parent router.
+	// No additional middleware setup needed for subrouters.
 	subs.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		fmt.Println("Request -", r)

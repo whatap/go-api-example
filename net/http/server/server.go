@@ -785,6 +785,31 @@ func main() {
 	}))
 
 	// ============================================================
+	// METHOD 4: whataphttp.WrapHandler() for http.Handler
+	// ============================================================
+	// Use whataphttp.WrapHandler() to wrap existing http.Handler implementations.
+	// This is useful for struct-based handlers that implement the http.Handler interface.
+	//
+	// BEFORE (Original):
+	//   http.Handle("/path", &MyHandler{})
+	//
+	// AFTER (Instrumented):
+	//   http.Handle("/path", whataphttp.WrapHandler(&MyHandler{}))
+	http.Handle("/wrapHandler", whataphttp.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/html")
+		w.Write([]byte("WrapHandler example: " + r.RequestURI))
+		trace.Step(r.Context(), "Text Message wrapHandler", "wrapHandler", 6, 6)
+	})))
+
+	// WrapHandler with http.ServeMux
+	// Use WrapHandler to wrap a handler registered on a custom ServeMux.
+	myMux := http.NewServeMux()
+	myMux.HandleFunc("/custom/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello from custom mux"))
+	})
+	http.Handle("/custom/", whataphttp.WrapHandler(myMux))
+
+	// ============================================================
 	// SQL Query Tracking Example
 	// ============================================================
 	// SQL queries are automatically tracked when using whatapsql.

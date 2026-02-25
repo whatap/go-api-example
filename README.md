@@ -26,6 +26,10 @@ All examples follow a common instrumentation pattern:
 | [FastHTTP](./github.com/valyala/fasthttp) | `github.com/valyala/fasthttp/` | `whatapfasthttp.Func(handler)` wrapper |
 | [net/http](./net/http/server) | `net/http/server/` | `whataphttp.Func()/Handler()` wrapper |
 
+> **Note**: In addition to middleware patterns, Wrap functions are available for struct field initialization:
+> `WrapEngine()` (Gin), `WrapEcho()` (Echo), `WrapApp()` (Fiber), `WrapRouter()` (Chi/Gorilla),
+> `WrapHandler()` (net/http, FastHTTP), `WrapConfig()` (Sarama), `WrapLogger()` (logrus)
+
 ### Databases
 
 | Library | Example | Instrumentation |

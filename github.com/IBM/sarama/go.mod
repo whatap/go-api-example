@@ -11,7 +11,7 @@ replace github.com/whatap/go-api => ../../../../go-api
 
 require (
 	github.com/IBM/sarama v1.46.3
-	github.com/whatap/go-api v0.4.2
+	github.com/whatap/go-api v0.5.4
 	github.com/whatap/go-api/instrumentation/github.com/IBM/sarama/whatapsarama v0.0.0-00010101000000-000000000000
 )
 

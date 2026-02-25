@@ -44,7 +44,7 @@ http.HandleFunc("/hello", whataphttp.Func(func(w http.ResponseWriter, r *http.Re
 }))
 ```
 
-### Method 2: whataphttp.Handler (For http.Handler)
+### Method 2: whataphttp.WrapHandler (For http.Handler)
 
 ```go
 type MyHandler struct{}
@@ -54,7 +54,7 @@ func (h *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Wrap http.Handler
-http.Handle("/api", whataphttp.Handler(&MyHandler{}))
+http.Handle("/api", whataphttp.WrapHandler(&MyHandler{}))
 ```
 
 ### Method 3: Manual Transaction Control
@@ -108,7 +108,7 @@ http.HandleFunc("/error", whataphttp.Func(func(w http.ResponseWriter, r *http.Re
 | Method | Use Case |
 |--------|----------|
 | `whataphttp.Func()` | Wrap `func(http.ResponseWriter, *http.Request)` |
-| `whataphttp.Handler()` | Wrap `http.Handler` |
+| `whataphttp.WrapHandler()` | Wrap `http.Handler` |
 | `trace.StartWithRequest()` | Manual transaction control |
 
 ## Complete Example

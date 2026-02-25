@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gorilla/mux v1.8.0
-	github.com/whatap/go-api v0.3.3
+	github.com/whatap/go-api v0.5.4
 )
 
 require (

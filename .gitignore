@@ -4,4 +4,7 @@ google.golang.org/grpc/client/client.exe
 google.golang.org/grpc/server/server.exe
 net/http/client/client.exe
 *.exe
-bin/app/
+bin/app/mssql/mssql
+bin/app/mysql/mysql
+bin/app/pgsql/pgsql
+bin/app/sql/sql

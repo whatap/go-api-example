@@ -6,7 +6,7 @@ replace github.com/whatap/go-api => ../../../../../go-api
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/whatap/go-api v0.0.0-00010101000000-000000000000
+	github.com/whatap/go-api v0.5.4
 )
 
 require (

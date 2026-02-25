@@ -461,6 +461,23 @@ func main() {
 
 	}))
 
+	// ============================================================
+	// WrapHandler: Wrap an existing handler function
+	// ============================================================
+	// Use whatapfasthttp.WrapHandler() to wrap a handler that is already defined.
+	// This is useful when assigning handlers to fasthttp.Server.Handler or
+	// when you have a pre-existing handler function.
+	//
+	// BEFORE (Original):
+	//   s := &fasthttp.Server{Handler: myHandler}
+	//
+	// AFTER (Instrumented):
+	//   s := &fasthttp.Server{Handler: whatapfasthttp.WrapHandler(myHandler)}
+	r.GET("/wrapHandler", whatapfasthttp.WrapHandler(func(ctx *fasthttp.RequestCtx) {
+		ctx.WriteString("WrapHandler example")
+		ctx.SetContentType("text/plain")
+	}))
+
 	s := &fasthttp.Server{
 		Handler: r.Handler,
 

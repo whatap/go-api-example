@@ -2,7 +2,7 @@ module fmt-example
 
 go 1.21
 
-require github.com/whatap/go-api v0.4.3
+require github.com/whatap/go-api v0.5.4
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect

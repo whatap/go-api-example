@@ -2,7 +2,7 @@ module github.com/whatap/go-api-example/distributed_tracing
 
 go 1.18
 
-require github.com/whatap/go-api v0.6.0
+require github.com/whatap/go-api v0.6.1
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect

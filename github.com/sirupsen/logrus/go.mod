@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/sirupsen/logrus v1.9.4
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

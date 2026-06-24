@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-sql-driver/mysql v1.7.0
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

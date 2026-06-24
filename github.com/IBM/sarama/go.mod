@@ -6,7 +6,7 @@ toolchain go1.24.11
 
 require (
 	github.com/IBM/sarama v1.46.3
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

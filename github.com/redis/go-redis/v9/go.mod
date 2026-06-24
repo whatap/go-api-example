@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/redis/go-redis/v9 v9.17.2
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

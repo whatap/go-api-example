@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

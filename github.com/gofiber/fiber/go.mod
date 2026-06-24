@@ -7,7 +7,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/gofiber/template v1.7.3
 	github.com/sirupsen/logrus v1.9.4
-	github.com/whatap/go-api v0.6.0
+	github.com/whatap/go-api v0.6.1
 )
 
 require (

@@ -4,6 +4,6 @@ go 1.23
 
 require (
 	github.com/anthropics/anthropic-sdk-go v0.5.0
-	github.com/whatap/go-api v0.6.0
-	github.com/whatap/go-api/instrumentation/llm v0.6.0
+	github.com/whatap/go-api v0.6.1
+	github.com/whatap/go-api/instrumentation/llm v0.6.1
 )

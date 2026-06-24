@@ -109,7 +109,7 @@ func main() {
 
 
 
-	// consume 1회당1tx
+	// one tx per consume
 	consumer, err := sarama.NewConsumer(brokers, config)
 	topic := "tmp-topic"
 

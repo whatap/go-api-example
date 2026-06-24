@@ -61,7 +61,7 @@ func main() {
 
 		tp.Execute(w, data)
 	})
-	// mysql, postgresql, mssql 등 기존 whatap 지원 모듈 사용 케이스
+	// Case using existing whatap-supported modules (mysql, postgresql, mssql, etc.)
 
 	//Case 1. mysql
 	http.HandleFunc("/WhatapDriverTest", func(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +88,7 @@ func main() {
 		}
 	})
 
-	// gorm hooking 케이스
+	// gorm hooking case
 
 	serviceDB, err := whatapgorm.Open("sqlite3", "test.db")
 	defer serviceDB.Close()
@@ -145,7 +145,7 @@ func main() {
 
 	})
 
-	//Case 4. Non Context + Select, SQL 통계만 처리하는 케이스
+	// Case 4. Non-Context + Select; handles SQL statistics only
 	http.HandleFunc("/Select", func(w http.ResponseWriter, r *http.Request) {
 		var products []Product
 		var buffer bytes.Buffer
@@ -272,7 +272,7 @@ func main() {
 				}()
 
 				size := 10
-				// Write Lock 발생 Case
+				// Case where a Write Lock occurs
 				for j := 0; j < size; j++ {
 					code := i*size + j
 					res := tx.Create(&Product{Code: code, Price: code * 100})

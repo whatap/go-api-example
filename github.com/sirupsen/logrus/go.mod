@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/sirupsen/logrus v1.9.4
-	github.com/whatap/go-api v0.5.4
+	github.com/whatap/go-api v0.6.0
 )
 
 require (
@@ -22,4 +22,3 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 )
-

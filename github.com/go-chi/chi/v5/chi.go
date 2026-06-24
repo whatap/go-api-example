@@ -39,12 +39,12 @@ func getUser(ctx context.Context) {
 
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
-	// GET 호출
+	// GET call
 	if resp, err := http.Get(callUrl); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 
-		// 결과 출력
+		// print result
 		if data, err := ioutil.ReadAll(resp.Body); err == nil {
 			return resp.StatusCode, string(data), err
 		} else {
@@ -202,12 +202,12 @@ func main() {
 		var buffer bytes.Buffer
 		var query string
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		var id int
 		var subject string
 		query = "select id, subject from tbl_faq limit 10"
 		rows, err := db.QueryContext(ctx, query)
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close() // must close (deferred)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -228,7 +228,7 @@ func main() {
 			}
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
-		// Prepared Statement 생성
+		// create prepared statement
 		query = "select id, subject from tbl_faq where id = ? limit ?"
 		stmt, err := db.PrepareContext(ctx, query)
 		if err != nil {
@@ -238,12 +238,12 @@ func main() {
 		}
 		defer stmt.Close()
 
-		// Prepared Statement 실행
+		// execute prepared statement
 		params := make([]interface{}, 0)
 		params = append(params, 8)
 		params = append(params, 1)
 
-		rows1, err1 := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+		rows1, err1 := stmt.QueryContext(ctx, params...) // pass placeholder parameters in order
 		if err1 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -261,7 +261,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		rows2, err2 := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+		rows2, err2 := stmt.QueryContext(ctx, 8, 1) // pass placeholder parameters in order
 		if err2 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

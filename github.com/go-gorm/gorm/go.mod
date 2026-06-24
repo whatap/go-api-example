@@ -3,7 +3,7 @@ module github.com/whatap/go-api-example/go-gorm/gorm
 go 1.18
 
 require (
-	github.com/whatap/go-api v0.5.4
+	github.com/whatap/go-api v0.6.0
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.2

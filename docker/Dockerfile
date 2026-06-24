@@ -2,8 +2,7 @@
 FROM golang:1.20
 
 # install whatap-agent (x64)
-RUN wget https://s3.ap-northeast-2.amazonaws.com/repo.whatap.io/alpine/x86_64/whatap-agent.tar.gz
-RUN tar -xvzf whatap-agent.tar.gz -C /
+COPY --from=whatap-go-inst-builder /usr/whatap/agent/ /usr/whatap/agent/
 
 # Create whatap.conf. You can copy it or attach it as a volume.
 RUN echo "accesskey=aaasd-23432-123-" >> /app/whatap.conf

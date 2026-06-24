@@ -70,19 +70,18 @@ import (
 // Use method.Start/End to trace custom functions.
 // This creates a "Method" step in the transaction trace.
 func getUser(ctx context.Context) {
-	start := time.UnixMilli()
-
-	end := time.UnixMilli()
-	elapsed_time = end - start
+	start := time.Now().UnixMilli()
 	methodCtx, _ := method.Start(ctx, "getUser")
 	defer method.End(methodCtx, nil)
 	time.Sleep(time.Duration(1) * time.Second)
+	end := time.Now().UnixMilli()
+	_ = end - start
 }
 
 // Helper function for HTTP GET requests (without instrumentation)
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
-	// GET 호출
+	// GET call
 	var f WhatapHttpGet
 	f = http.Get
 	WrapResponse(callUrl, f)
@@ -90,7 +89,7 @@ func httpGet(callUrl string) (int, string, error) {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 
-		// 결과 출력
+		// print result
 		if data, err := ioutil.ReadAll(resp.Body); err == nil {
 			return resp.StatusCode, string(data), err
 		} else {
@@ -831,7 +830,7 @@ func main() {
 		if err != nil {
 			return
 		}
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close() // must close (deferred)
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
@@ -854,7 +853,7 @@ func main() {
 		params = append(params, 8)
 		params = append(params, 1)
 
-		rows1, _ := stmt.QueryContext(ctx, params...) //Placeholder 파라미터 순서대로 전달
+		rows1, _ := stmt.QueryContext(ctx, params...) // pass placeholder parameters in order
 		defer rows1.Close()
 
 		for rows1.Next() {
@@ -865,7 +864,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln(id, subject))
 		}
 
-		rows2, _ := stmt.QueryContext(ctx, 8, 1) //Placeholder 파라미터 순서대로 전달
+		rows2, _ := stmt.QueryContext(ctx, 8, 1) // pass placeholder parameters in order
 		defer rows2.Close()
 
 		for rows1.Next() {

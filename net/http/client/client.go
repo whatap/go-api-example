@@ -49,11 +49,11 @@ import (
 // Simple HTTP GET without instrumentation
 func httpGet(callUrl string) (int, error) {
 	fmt.Println("httpGet ", callUrl)
-	// GET 호출
+	// GET call
 	if resp, err := http.Get(callUrl); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
-		// 결과 출력
+		// print result
 		//if data, err := ioutil.ReadAll(resp.Body); err == nil {
 		if _, err := ioutil.ReadAll(resp.Body); err == nil {
 			//fmt.Printf("%s\n", string(data))
@@ -75,7 +75,7 @@ func httpPost(callUrl, body string) (int, error) {
 	if resp, err := http.Post(callUrl, "text/plain", reqBody); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
-		// Response 체크.
+		// check Response.
 		//if data, err := ioutil.ReadAll(resp.Body); err == nil {
 		if _, err := ioutil.ReadAll(resp.Body); err == nil {
 			//fmt.Printf("%s\n", string(data))

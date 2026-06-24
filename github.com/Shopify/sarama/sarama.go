@@ -49,7 +49,7 @@ func main() {
 
 	interceptor := whatapsarama.Interceptor{Brokers: brokers}
 
-	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} //Async에만 적용됨
+	config.Producer.Interceptors = []sarama.ProducerInterceptor{&interceptor} // applies to Async only
 	config.Consumer.Interceptors = []sarama.ConsumerInterceptor{&interceptor}
 
 	producer, err := sarama.NewAsyncProducer(brokers, config)
@@ -108,7 +108,7 @@ func main() {
 
 	})
 
-	// Async Result 처리 루틴
+	// Async result handling routine
 	go func() {
 		for {
 			select {
@@ -169,7 +169,7 @@ func main() {
 		trace.Step(ctx, "Sync Producer Success Message", "Success", 2, 2)
 	})
 
-	// consume 1회당1tx
+	// one tx per consume
 	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
 		fmt.Println("error new consumer ", err)

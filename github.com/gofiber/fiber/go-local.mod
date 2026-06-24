@@ -1,4 +1,4 @@
-module github.comf/whatap/go-api-example/github.com/gofiber/fiber
+module github.com/whatap/go-api-example/github.com/gofiber/fiber
 
 go 1.18
 

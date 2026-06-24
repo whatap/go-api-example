@@ -15,6 +15,7 @@ import (
 	"github.com/whatap/go-api/instrumentation/database/sql/whatapsql"
 	"github.com/whatap/go-api/instrumentation/net/http/whataphttp"
 	"github.com/whatap/go-api/trace"
+	"github.com/whatap/go-api/trace/gid"
 )
 
 const (
@@ -102,7 +103,7 @@ func main() {
 		db := sqlx.NewDb(wdb, PGSQL_DRIVER_NAME)
 		defer db.Close()
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		person := []Person{}
 		sql := "select * from bbs "
 		err = db.Select(&person, sql)
@@ -139,7 +140,7 @@ func main() {
 		db := sqlx.NewDb(wdb, PGSQL_DRIVER_NAME)
 		defer db.Close()
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		person := []Person{}
 		sql := "select * from bbs "
 		err = db.Select(&person, sql)
@@ -238,7 +239,7 @@ func main() {
 			}
 
 			if rows, err1 := stmt.QueryContext(ctx, params...); err == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 				for rows.Next() {
 					err2 := rows.Scan(&id, &name)
 					if err2 != nil {
@@ -256,7 +257,7 @@ func main() {
 
 		if stmt, err := db.PrepareContext(ctx, query); err == nil {
 			if rows, err1 := stmt.Query(params...); err1 == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err2 := rows.Scan(&id, &name)
@@ -271,7 +272,7 @@ func main() {
 			}
 
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err2 := rows.Scan(&id, &name)
@@ -356,7 +357,7 @@ func main() {
 		params = append(params, sql.Named("idx2", 1))
 		if stmt, err := db.Prepare(query); err == nil {
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
@@ -382,7 +383,7 @@ func main() {
 		query = "select id, name from bbs where id in ($1, $2) limit 10"
 		if stmt, err := db.Prepare(query); err == nil {
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
@@ -408,7 +409,7 @@ func main() {
 		query = "select id, name from bbs where id in (:idx1, :idx2) limit 10"
 		if stmt, err := db.Prepare(query); err == nil {
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
@@ -430,7 +431,7 @@ func main() {
 			buffer.WriteString(fmt.Sprintln("Error :idx db.Prepared ", err, "<br/>"))
 			//http.Error(w, fmt.Sprintln("Error :idx db.Prepared", err), http.StatusInternalServerError)
 		}
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		_, _ = w.Write(buffer.Bytes())
 
 		fmt.Println("Response -", r.Response)
@@ -517,7 +518,7 @@ func main() {
 				tx.Rollback()
 				return
 			}
-			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+			defer rows.Close() // must close (deferred)
 
 			for rows.Next() {
 				err := rows.Scan(&id, &name)
@@ -541,7 +542,7 @@ func main() {
 			if err != nil {
 				fmt.Println("Error tx.QueryContext ", err)
 			} else {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
 					if err != nil {
@@ -601,7 +602,7 @@ func main() {
 				tx.Rollback()
 				return
 			}
-			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+			defer rows.Close() // must close (deferred)
 
 			for rows.Next() {
 				err := rows.Scan(&id, &name)
@@ -625,7 +626,7 @@ func main() {
 			if err != nil {
 				fmt.Println("Error tx.QueryContext ", err)
 			} else {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
 					if err != nil {
@@ -656,7 +657,7 @@ func main() {
 		db, err := whatapsql.OpenContext(ctx, PGSQL_DRIVER_NAME, dataSource)
 		if err != nil {
 			fmt.Println("Error whatapsql.Open")
-			// Rollback 없이 return . request 종료. driver에서 Rollback 호출 에러 발생, driver: bad connection
+			// return without Rollback; request ends. The driver raises a Rollback error: driver: bad connection
 			return
 		}
 		defer db.Close()
@@ -685,7 +686,7 @@ func main() {
 				fmt.Println("Error tx.Query ", err)
 				return
 			}
-			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+			defer rows.Close() // must close (deferred)
 
 			for rows.Next() {
 				err := rows.Scan(&id, &name)
@@ -710,7 +711,7 @@ func main() {
 			if err != nil {
 				fmt.Println("Error tx.QueryContext ", err)
 			} else {
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 				for rows.Next() {
 					err := rows.Scan(&id, &name)
 					if err != nil {
@@ -770,8 +771,8 @@ func main() {
 		// ctx := r.Context()
 		fmt.Println("Request -", r)
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
-		fmt.Println("GID=", trace.GetGID())
-		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", trace.GetGID()))
+		fmt.Println("GID=", gid.GetGID())
+		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", gid.GetGID()))
 
 		var id int
 		var subject string
@@ -807,7 +808,7 @@ func main() {
 
 		db := serviceDB
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		person := []Person{}
 		sql := "select * from bbs "
 		err = db.Select(&person, sql)
@@ -836,7 +837,7 @@ func main() {
 
 		db := serviceDB
 
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		person := []Person{}
 		sql := "select * from bbs "
 		err = db.SelectContext(ctx, &person, sql)

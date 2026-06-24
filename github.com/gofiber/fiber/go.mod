@@ -1,4 +1,4 @@
-module github.comf/whatap/go-api-example/github.com/gofiber/fiber
+module github.com/whatap/go-api-example/github.com/gofiber/fiber
 
 go 1.18
 
@@ -6,8 +6,8 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/gofiber/template v1.7.3
-	github.com/sirupsen/logrus v1.9.0
-	github.com/whatap/go-api v0.5.4
+	github.com/sirupsen/logrus v1.9.4
+	github.com/whatap/go-api v0.6.0
 )
 
 require (

@@ -29,6 +29,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
@@ -49,10 +50,7 @@ func main() {
 	// ============================================================
 	// This enables transaction-linked logging via goroutine ID.
 	// Logs are collected by WhaTap logsink with txid, mtid, gid context.
-	log.SetOutput(logsink.GetTraceLogWriter(&logsink.LogConfig{
-		Category: "AppLogStdOut",
-		Stack:    false,
-	}))
+	log.SetOutput(logsink.GetTraceLogWriter(os.Stdout))
 
 	log.Println("Server starting...")
 	log.Printf("Listening on port %d", 8080)

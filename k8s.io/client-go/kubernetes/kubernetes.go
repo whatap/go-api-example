@@ -83,7 +83,7 @@ func GetPodsList(ctx context.Context, namespace string) (*apiv1.PodList, error) 
 	if err != nil {
 		return nil, err
 	}
-	// 파드를 나열하기 위해 API에 접근한다
+	// access the API to list pods
 	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err

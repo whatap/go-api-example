@@ -116,7 +116,7 @@ func main() {
 		dbConn, err := whatapsql.OpenContext(ctx, "mysql", dataSource)
 		db, err := gorm.Open(mysql.New(mysql.Config{Conn: dbConn}), &gorm.Config{})
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("failed to connect to Db")
 		}
 
 		db.AutoMigrate(&Product{})
@@ -142,7 +142,7 @@ func main() {
 	// NOTE: Global DB without context will track queries but won't link to HTTP transaction.
 	serviceDB, err := whatapgorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
-		panic("Db 연결에 실패하였습니다.")
+		panic("failed to connect to Db")
 	}
 
 	// ============================================================
@@ -168,7 +168,7 @@ func main() {
 		// Open with context for transaction linking
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("failed to connect to Db")
 		}
 
 		// Create operations - tracked and linked to HTTP transaction
@@ -190,7 +190,7 @@ func main() {
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("failed to connect to Db")
 		}
 
 		for i := 0; i < 100; i++ {
@@ -275,7 +275,7 @@ func main() {
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("failed to connect to Db")
 		}
 
 		db.Unscoped().Delete(&Product{}, "1 = 1")
@@ -293,7 +293,7 @@ func main() {
 
 		db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 		if err != nil {
-			panic("Db 연결에 실패하였습니다.")
+			panic("failed to connect to Db")
 		}
 
 		tx := db.Begin()
@@ -348,7 +348,7 @@ func main() {
 			go func(i int) {
 				db, err := whatapgorm.OpenWithContext(sqlite.Open("test.db"), &gorm.Config{}, ctx)
 				if err != nil {
-					panic("Db 연결에 실패하였습니다.")
+					panic("failed to connect to Db")
 				}
 				tx := db.Begin()
 

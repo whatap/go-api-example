@@ -24,7 +24,7 @@ All examples follow a common instrumentation pattern:
 | [Chi](./github.com/go-chi/chi) | `github.com/go-chi/chi/` | `r.Use(whatapchi.Middleware)` (no parentheses) |
 | [Gorilla Mux](./github.com/gorilla/mux) | `github.com/gorilla/mux/` | `r.Use(whatapmux.Middleware())` |
 | [FastHTTP](./github.com/valyala/fasthttp) | `github.com/valyala/fasthttp/` | `whatapfasthttp.Func(handler)` wrapper |
-| [net/http](./net/http/server) | `net/http/server/` | `whataphttp.Func()/Handler()` wrapper |
+| [net/http](./net/http/server) | `net/http/server/` | `whataphttp.Func()/WrapHandler()` wrapper |
 
 > **Note**: In addition to middleware patterns, Wrap functions are available for struct field initialization:
 > `WrapEngine()` (Gin), `WrapEcho()` (Echo), `WrapApp()` (Fiber), `WrapRouter()` (Chi/Gorilla),
@@ -73,6 +73,25 @@ All examples follow a common instrumentation pattern:
 | Library | Example | Instrumentation |
 |---------|---------|-----------------|
 | [fmt](./fmt) | `fmt/` | `whatapfmt.Print/Printf/Println()` |
+
+### LLM monitoring
+
+For an LLM API **without** a dedicated adapter (custom HTTP endpoint, in-house gateway), use the manual `llm.Start` API (base `go-api`, no nested module):
+
+| Example | Path | Instrumentation |
+|---------|------|-----------------|
+| [llm (manual API)](./llm) | `llm/` | `llm.Start(ctx, llm.Config{...})` + `whataphttp.NewRoundTrip` (any HTTP client) |
+
+For supported SDKs, use the adapters (in the `github.com/whatap/go-api/instrumentation/llm` nested module, Go 1.23+):
+
+| SDK | Example | Instrumentation |
+|-----|---------|-----------------|
+| [sashabaranov/go-openai](./github.com/sashabaranov/go-openai) | `github.com/sashabaranov/go-openai/` | `whatapopenai.WrapClient()` (client-level decorator) |
+| [anthropics/anthropic-sdk-go](./github.com/anthropics/anthropic-sdk-go) | `github.com/anthropics/anthropic-sdk-go/` | `whatapanthropic.WrapAndNewMessage(ctx, client.Messages, params)` (service-level) |
+| [openai/openai-go (official)](./github.com/openai/openai-go) | `github.com/openai/openai-go/` | `whatapopenaigo.WrapAndNewChatCompletion(ctx, client.Chat.Completions, params)` (3-step selector) |
+| [cloudwego/eino](./github.com/cloudwego/eino) | `github.com/cloudwego/eino/` | `whatapeino.WrapChatModel(inner)` (ChatModel decorator) |
+
+All LLM adapters capture token counts (prompt/completion/total), finish reason, response content, streaming TTFT, and the real endpoint URL (via `whataphttp.NewRoundTrip` on the SDK's HTTP transport). Auto-inject (`whatap-go-inst go build`) handles all the wrapping automatically.
 
 ## Key Features
 

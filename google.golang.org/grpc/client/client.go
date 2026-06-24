@@ -160,8 +160,8 @@ func main() {
 				globalStream.CloseSend()
 			}
 		}
-		// request 종료되면서 ctx cancel. Error  rpc error: code = Canceled desc = context canceled
-		// 전역 ctx 를 넣어 주면 종료 안됨.
+		// ctx is canceled when the request ends. Error: rpc error: code = Canceled desc = context canceled
+		// passing a global ctx prevents cancellation.
 		ctx = r.Context()
 		if tmp, err := c.Health(ctx); err != nil {
 			log.Fatalf("Error stream : %v", err)

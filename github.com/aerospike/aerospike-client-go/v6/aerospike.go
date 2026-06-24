@@ -72,10 +72,10 @@ func main() {
 	// Note: When called outside HTTP handler, txid will be 0.
 	var err error
 	connection := fmt.Sprintf("aerospike://%s:%d", asHost, asPort)
-	client, err = sql.WrapOpen(context.Background(), "aerospike", connection,
+	client, err = sql.WrapOpen(context.Background(), connection,
 		func() (*aerospike.Client, error) {
 			return aerospike.NewClient(asHost, asPort)
-		})()
+		})
 	if err != nil {
 		fmt.Printf("Warning: Failed to connect to Aerospike: %v\n", err)
 		// Continue anyway for testing without Aerospike server
@@ -115,10 +115,10 @@ func main() {
 		}
 		value := r.URL.Query().Get("value")
 
-		key, err := aerospike.NewKey("test", "demo", name)
-		if err != nil {
-			trace.Error(ctx, err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		key, keyErr := aerospike.NewKey("test", "demo", name)
+		if keyErr != nil {
+			trace.Error(ctx, keyErr)
+			http.Error(w, keyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -137,7 +137,7 @@ func main() {
 		//   - fn: function that returns error
 		err = sql.WrapError(ctx, "aerospike", "Put", func() error {
 			return client.Put(nil, key, bins)
-		})()
+		})
 		if err != nil {
 			trace.Error(ctx, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -170,10 +170,10 @@ func main() {
 			name = "default"
 		}
 
-		key, err := aerospike.NewKey("test", "demo", name)
-		if err != nil {
-			trace.Error(ctx, err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		key, keyErr := aerospike.NewKey("test", "demo", name)
+		if keyErr != nil {
+			trace.Error(ctx, keyErr)
+			http.Error(w, keyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -189,7 +189,7 @@ func main() {
 		// Note: The return type *aerospike.Record is preserved.
 		record, err := sql.Wrap(ctx, "aerospike", "Get", func() (*aerospike.Record, error) {
 			return client.Get(nil, key)
-		})()
+		})
 		if err != nil {
 			trace.Error(ctx, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -226,17 +226,17 @@ func main() {
 			name = "default"
 		}
 
-		key, err := aerospike.NewKey("test", "demo", name)
-		if err != nil {
-			trace.Error(ctx, err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		key, keyErr := aerospike.NewKey("test", "demo", name)
+		if keyErr != nil {
+			trace.Error(ctx, keyErr)
+			http.Error(w, keyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		// Delete returns (bool, error) - existed flag
 		existed, err := sql.Wrap(ctx, "aerospike", "Delete", func() (bool, error) {
 			return client.Delete(nil, key)
-		})()
+		})
 		if err != nil {
 			trace.Error(ctx, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -268,16 +268,16 @@ func main() {
 			name = "default"
 		}
 
-		key, err := aerospike.NewKey("test", "demo", name)
-		if err != nil {
-			trace.Error(ctx, err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		key, keyErr := aerospike.NewKey("test", "demo", name)
+		if keyErr != nil {
+			trace.Error(ctx, keyErr)
+			http.Error(w, keyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		exists, err := sql.Wrap(ctx, "aerospike", "Exists", func() (bool, error) {
 			return client.Exists(nil, key)
-		})()
+		})
 		if err != nil {
 			trace.Error(ctx, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -314,7 +314,7 @@ func main() {
 		// BatchGet returns ([]*Record, error)
 		records, err := sql.Wrap(ctx, "aerospike", "BatchGet", func() ([]*aerospike.Record, error) {
 			return client.BatchGet(nil, keys)
-		})()
+		})
 		if err != nil {
 			trace.Error(ctx, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

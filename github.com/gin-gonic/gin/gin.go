@@ -54,12 +54,12 @@ func getUser(ctx context.Context) {
 // Helper function for HTTP GET requests
 func httpGet(callUrl string) (int, string, error) {
 	fmt.Println("httpGet ", callUrl)
-	// GET 호출
+	// GET call
 	if resp, err := http.Get(callUrl); err == nil {
 		defer resp.Body.Close()
 		fmt.Println("status=", resp.StatusCode)
 
-		// 결과 출력
+		// print result
 		if data, err := ioutil.ReadAll(resp.Body); err == nil {
 			return resp.StatusCode, string(data), err
 		} else {

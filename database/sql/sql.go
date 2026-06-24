@@ -45,6 +45,7 @@ import (
 	"github.com/whatap/go-api/instrumentation/net/http/whataphttp"
 	whatapsql "github.com/whatap/go-api/sql"
 	"github.com/whatap/go-api/trace"
+	"github.com/whatap/go-api/trace/gid"
 )
 
 const (
@@ -151,7 +152,7 @@ func main() {
 			fmt.Println("Error db.QueryContext ", err)
 			return
 		}
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close() // must close (deferred)
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
@@ -171,7 +172,7 @@ func main() {
 			fmt.Println("Error db.QueryContext ", err)
 			return
 		}
-		defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+		defer rows.Close() // must close (deferred)
 
 		for rows.Next() {
 			err := rows.Scan(&id, &subject)
@@ -297,7 +298,7 @@ func main() {
 			sqlCtx, _ = whatapsql.StartWithParam(ctx, dataSource, query, params...)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err == nil {
 				whatapsql.End(sqlCtx, err1)
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 				for rows.Next() {
 					err2 := rows.Scan(&id, &subject)
 					if err2 != nil {
@@ -320,7 +321,7 @@ func main() {
 			sqlCtx, _ = whatapsql.StartWithParam(ctx, dataSource, query, params...)
 			if rows, err1 := stmt.Query(params...); err1 == nil {
 				whatapsql.End(sqlCtx, err1)
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err2 := rows.Scan(&id, &subject)
@@ -339,7 +340,7 @@ func main() {
 			sqlCtx, _ = whatapsql.StartWithParam(ctx, dataSource, query, params...)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
 				whatapsql.End(sqlCtx, err1)
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err2 := rows.Scan(&id, &subject)
@@ -456,7 +457,7 @@ func main() {
 			sqlCtx, _ = whatapsql.StartWithParamArray(ctx, dataSource, query, params)
 			if rows, err1 := stmt.QueryContext(ctx, params...); err1 == nil {
 				whatapsql.End(sqlCtx, err1)
-				defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+				defer rows.Close() // must close (deferred)
 
 				for rows.Next() {
 					err := rows.Scan(&id, &subject)
@@ -477,7 +478,7 @@ func main() {
 			fmt.Println("Error db.Prepard ", err)
 			http.Error(w, fmt.Sprintln("Error db.Prepared", err), http.StatusInternalServerError)
 		}
-		// 복수 Row를 갖는 SQL 쿼리
+		// SQL query returning multiple rows
 		_, _ = w.Write(buffer.Bytes())
 
 		fmt.Println("Response -", r.Response)
@@ -590,7 +591,7 @@ func main() {
 				fmt.Println("Error tx.Query ", err)
 				return
 			}
-			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+			defer rows.Close() // must close (deferred)
 
 			for rows.Next() {
 				err := rows.Scan(&id, &subject)
@@ -620,7 +621,7 @@ func main() {
 			if err != nil {
 				fmt.Println("Error tx.QueryContext ", err)
 			}
-			defer rows.Close() //반드시 닫는다 (지연하여 닫기)
+			defer rows.Close() // must close (deferred)
 
 			for rows.Next() {
 				err := rows.Scan(&id, &subject)
@@ -703,7 +704,7 @@ func main() {
 	// ============================================================
 	// CASE 8: Using Goroutine ID for Context-less Tracking
 	// ============================================================
-	// Demonstrates using trace.GetGID() when context is not available.
+	// Demonstrates using gid.GetGID() when context is not available.
 	// Enable go.use_goroutine_id_enabled=true in whatap.conf.
 	http.HandleFunc("/service/gid", whataphttp.Func(func(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
@@ -714,8 +715,8 @@ func main() {
 		buffer.WriteString(r.RequestURI + "<br/><hr/>")
 
 		// Get goroutine ID for debugging
-		fmt.Println("GID=", trace.GetGID())
-		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", trace.GetGID()))
+		fmt.Println("GID=", gid.GetGID())
+		buffer.WriteString(fmt.Sprintf("GID=%d<br/><hr/>", gid.GetGID()))
 
 		var id int
 		var subject string

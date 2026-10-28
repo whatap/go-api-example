@@ -35,6 +35,12 @@ echo:
 #	echo "labstack/echo"
 	make -C github.com/labstack/echo
 
+# echo/v5 requires Go 1.25+ (separate nested module). Opt-in target — not in
+# the default `all`/`build` so the rest of the examples stay buildable on Go 1.18.
+# Build explicitly with: make echov5   (GOTOOLCHAIN=auto fetches the toolchain)
+echov5:
+	make -C github.com/labstack/echo/v5
+
 chi:
 #	echo "go-chi/chi"
 	make -C github.com/go-chi/chi
@@ -95,6 +101,7 @@ build:
 	make -C github.com/jinzhu/gorm build 
 	make -C github.com/Shopify/sarama build
 	make -C k8s.io/client-go/kubernetes build
+#	make -C github.com/labstack/echo/v5 build   # opt-in (Go 1.25+): make echov5
 #	make -C github.com/aws build
 #	make -C github.com/mongodb/mongo-go-driver build
 #	make -C github.com/jmoiron/sqlx build
@@ -114,6 +121,7 @@ copy_env:
 	make -C github.com/jinzhu/gorm copy_env 
 	make -C github.com/Shopify/sarama copy_env
 	make -C k8s.io/client-go/kubernetes copy_env
+#	make -C github.com/labstack/echo/v5 copy_env   # opt-in (Go 1.25+)
 #	make -C github.com/aws copy_env
 #	make -C github.com/mongodb/mongo-go-driver copy_env
 #	make -C github.com/jmoiron/sqlx copy_env
@@ -136,6 +144,7 @@ local:
 	cp ./github.com/Shopify/sarama/go-local.mod ./github.com/Shopify/sarama/go.mod
 
 	cp ./k8s.io/client-go/kubernetes/go-local.mod ./k8s.io/client-go/kubernetes/go.mod
+#	cp ./github.com/labstack/echo/v5/go-local.mod ./github.com/labstack/echo/v5/go.mod   # opt-in (Go 1.25+)
 #	cp ./github.com/aws/go-local.mod ./github.com/aws/go.mod
 #	cp ./github.com/mongodb/mongo-go-driver/go-local.mod ./github.com/mongodb/mongo-go-driver/go.mod
 #	cp ./github.com/jmoiron/sqlx/go-local.mod ./github.com/jmoiron/sqlx/go.mod
@@ -214,6 +223,7 @@ clean:
 	make -C github.com/jinzhu/gorm clean 
 	make -C github.com/Shopify/sarama clean
 	make -C k8s.io/client-go/kubernetes clean
+#	make -C github.com/labstack/echo/v5 clean   # opt-in (Go 1.25+)
 #	make -C github.com/aws clean
 #	make -C github.com/mongodb/mongo-go-driver clean
 #	make -C github.com/jmoiron/sqlx clean

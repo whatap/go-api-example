@@ -36,9 +36,11 @@ start(){
     start_gorilla
     
     start_echo
-    
+
     start_echov4
-    
+
+    start_echov5
+
     start_sql
     start_mysql
     start_mssql
@@ -133,10 +135,19 @@ start_echo(){
 start_echov4(){
 	if [ "$DATA_SOURCE" != "" ]; then
 		DATA_ARGS="-ds ${DATA_SOURCE}"
-   	fi 
+   	fi
     APP_HOME=./app/echov4
     echo "WHATAP_HOME=${APP_HOME} nohup ${APP_HOME}/echov4 ${IS_WHATAP} -p 8089 -up ${UDP_PORT} ${DATA_ARGS} > ${APP_HOME}/echov4.log &"
     WHATAP_HOME=${APP_HOME} nohup ${APP_HOME}/echov4 ${IS_WHATAP} -p 8089 -up ${UDP_PORT} ${DATA_ARGS} > ${APP_HOME}/echov4.log &
+    echo $! >> run.pid
+}
+start_echov5(){
+	if [ "$DATA_SOURCE" != "" ]; then
+		DATA_ARGS="-ds ${DATA_SOURCE}"
+   	fi
+    APP_HOME=./app/echov5
+    echo "WHATAP_HOME=${APP_HOME} nohup ${APP_HOME}/echov5 ${IS_WHATAP} -p 8106 -up ${UDP_PORT} ${DATA_ARGS} > ${APP_HOME}/echov5.log &"
+    WHATAP_HOME=${APP_HOME} nohup ${APP_HOME}/echov5 ${IS_WHATAP} -p 8106 -up ${UDP_PORT} ${DATA_ARGS} > ${APP_HOME}/echov5.log &
     echo $! >> run.pid
 }
 
@@ -325,6 +336,7 @@ usage(){
     echo "    start_gorilla [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_echo [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_echov4 [ipc_port] [whatap_flag '-whatap'] "
+    echo "    start_echov5 [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_sql [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_mysql [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_mssql [ipc_port] [whatap_flag '-whatap'] "
@@ -336,7 +348,7 @@ usage(){
     echo "    start_sarama [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_chiv5 [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_fasthttp [ipc_port] [whatap_flag '-whatap'] "
-    echo "    start_fiberv5 [ipc_port] [whatap_flag '-whatap'] "
+    echo "    start_fiberv2 [ipc_port] [whatap_flag '-whatap'] "
     #echo "    start_awsv2 [ipc_port] [whatap_flag '-whatap'] "
     echo "    start_kuber [ipc_port] [whatap_flag '-whatap'] "
     #echo "    start_mongo [ipc_port] [whatap_flag '-whatap'] "
@@ -400,7 +412,12 @@ case "$1" in
     	 set_param $2 $3 $4
         stop
         start_echov4
-        ;;    
+        ;;
+    start_echov5)
+    	 set_param $2 $3 $4
+        stop
+        start_echov5
+        ;;
     start_sql)
     	 set_param $2 $3 $4
         stop
@@ -456,11 +473,11 @@ case "$1" in
         stop
         start_fasthttp
         ;;    
-    start_fiberv5)
+    start_fiberv2)
     	 set_param $2 $3 $4
         stop
-        start_fiberv5
-        ;;    
+        start_fiberv2
+        ;;
     start_awsv2)
     	 #set_param $2 $3 $4
         #stop

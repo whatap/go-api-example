@@ -18,11 +18,16 @@ All examples follow a common instrumentation pattern:
 | Library | Example | Middleware Pattern |
 |---------|---------|-------------------|
 | [Gin](./github.com/gin-gonic/gin) | `github.com/gin-gonic/gin/` | `r.Use(whatapgin.Middleware())` |
+| [Echo v5](./github.com/labstack/echo/v5) | `github.com/labstack/echo/v5/` | inline middleware (`trace` only, Go 1.25+) |
 | [Echo v4](./github.com/labstack/echo/v4) | `github.com/labstack/echo/v4/` | `e.Use(whatapecho.Middleware())` |
 | [Echo v3](./github.com/labstack/echo) | `github.com/labstack/echo/` | `e.Use(whatapecho.Middleware())` |
 | [Fiber v2](./github.com/gofiber/fiber) | `github.com/gofiber/fiber/` | `app.Use(whatapfiber.Middleware())` |
 | [Chi](./github.com/go-chi/chi) | `github.com/go-chi/chi/` | `r.Use(whatapchi.Middleware)` (no parentheses) |
 | [Gorilla Mux](./github.com/gorilla/mux) | `github.com/gorilla/mux/` | `r.Use(whatapmux.Middleware())` |
+| [Beego v2](./github.com/beego/beego/v2) | `github.com/beego/beego/v2/` | `web.RunWithMiddleWares(addr, whataphttp.WrapHandler)` |
+| [Beego v1](./github.com/beego/beego) | `github.com/beego/beego/` | `beego.RunWithMiddleWares(addr, whataphttp.WrapHandler)` |
+| [httprouter](./github.com/julienschmidt/httprouter) | `github.com/julienschmidt/httprouter/` | `whataphttp.WrapHandler(router)` at `ListenAndServe` |
+| [go-restful v3](./github.com/emicklei/go-restful/v3) | `github.com/emicklei/go-restful/v3/` | `whataphttp.WrapHandler(container)` at `ListenAndServe` |
 | [FastHTTP](./github.com/valyala/fasthttp) | `github.com/valyala/fasthttp/` | `whatapfasthttp.Func(handler)` wrapper |
 | [net/http](./net/http/server) | `net/http/server/` | `whataphttp.Func()/WrapHandler()` wrapper |
 
